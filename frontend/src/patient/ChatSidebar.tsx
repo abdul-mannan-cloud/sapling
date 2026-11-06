@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { ConversationSummary } from '../types';
 import { IconPencil, IconPlus, IconTrash } from '../components/Icons';
+import { OfflineModeToggle } from '../components/OfflineModeToggle';
 
 export function ChatSidebar({
   conversations,
@@ -37,9 +38,10 @@ export function ChatSidebar({
         New chat
       </button>
       <div className="rail-label">Your chats</div>
-      {conversations.length === 0 && <div className="empty-state">No chats yet — start one above.</div>}
-      {conversations.map((c) => (
-        <div key={c.id} className={`chat-list-item${c.id === activeId ? ' active' : ''}`} onClick={() => onSelect(c.id)}>
+      <div className="rail-list">
+        {conversations.length === 0 && <div className="empty-state">No chats yet — start one above.</div>}
+        {conversations.map((c) => (
+          <div key={c.id} className={`chat-list-item${c.id === activeId ? ' active' : ''}`} onClick={() => onSelect(c.id)}>
           {renamingId === c.id ? (
             <input
               className="rename-input"
@@ -85,8 +87,10 @@ export function ChatSidebar({
               </div>
             </>
           )}
-        </div>
-      ))}
+          </div>
+        ))}
+      </div>
+      <OfflineModeToggle />
     </div>
   );
 }

@@ -4,6 +4,7 @@ import { useAuth } from '../auth/AuthContext';
 import { ClockBar } from '../components/ClockBar';
 import { Logo } from '../components/Logo';
 import { IconChat, IconInbox, IconLogout, IconUsers } from '../components/Icons';
+import { OfflineModeToggle } from '../components/OfflineModeToggle';
 import { useHandoffs } from '../shared/useHandoffs';
 import { PatientListView } from './PatientListView';
 import { PatientDetailView } from './PatientDetailView';
@@ -87,6 +88,7 @@ export function AdminApp() {
             All chats
           </button>
         </nav>
+        <OfflineModeToggle theme="dark" />
         <div className="side-nav-footer">
           <div className="avatar">{auth!.username.slice(0, 2).toUpperCase()}</div>
           <div className="side-nav-user">

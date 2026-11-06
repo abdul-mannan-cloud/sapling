@@ -121,4 +121,33 @@ describe('RuleAgentService — Phase 1 scenario script', () => {
     const result = agent.run(buildContext('can you also update my mailing address'));
     expect(result.handoffAction).toMatchObject({ operation: 'create', type: 'other' });
   });
+
+  it.each(['hello', 'hi', 'Hey!', 'hiya', 'good morning'])(
+    'a bare greeting ("%s") gets a friendly reply with no handoff — not an avoidable staff follow-up',
+    (greeting) => {
+      const result = agent.run(buildContext(greeting));
+      expect(result.handoffAction).toBeUndefined();
+      expect(result.reply).toContain(patient.preferred_name);
+    },
+  );
+
+  it('a greeting attached to a real request still routes to that request, not the generic greeting reply', () => {
+    const result = agent.run(buildContext('hi, can I get a refill on my BP med'));
+    expect(result.handoffAction).toMatchObject({ operation: 'create', type: 'refill' });
+  });
+
+  it.each(['latest appointment', 'let me know of my latest appointments', 'my upcoming appointment', 'when is my appointment'])(
+    'natural paraphrases of "next appointment" ("%s") still answer, instead of falling through to the generic handoff',
+    (phrase) => {
+      const result = agent.run(buildContext(phrase));
+      expect(result.handoffAction).toBeUndefined();
+      expect(result.reply).toContain('January 14, 2027');
+    },
+  );
+
+  it('"is it confirmed?" is treated the same as "is it booked yet?"', () => {
+    const result = agent.run(buildContext('is it confirmed?', [pendingApptRequest]));
+    expect(result.handoffAction).toBeUndefined();
+    expect(result.reply.toLowerCase()).toContain('not booked');
+  });
 });

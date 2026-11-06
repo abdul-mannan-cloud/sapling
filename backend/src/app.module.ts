@@ -10,6 +10,7 @@ import { HandoffModule } from './handoffs/handoff.module.js';
 import { ConversationModule } from './conversations/conversation.module.js';
 import { AuthModule } from './auth/auth.module.js';
 import { ChatModule } from './chat/chat.module.js';
+import { OfflineModeModule } from './agent-mode/offline-mode.module.js';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { ChatModule } from './chat/chat.module.js';
     HandoffModule,
     ConversationModule,
     ChatModule,
+    OfflineModeModule,
   ],
   controllers: [AppController],
   providers: [AppService],

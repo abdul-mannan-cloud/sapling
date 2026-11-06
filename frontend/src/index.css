@@ -457,6 +457,22 @@ button.small:hover {
   flex-direction: column;
   gap: 4px;
   min-height: 0;
+  overflow: hidden;
+}
+
+/* The scrollable part — a long chat list was previously growing .rail
+   past the viewport and scrolling the whole page instead of itself,
+   since a flex/grid item has to opt into its own overflow boundary
+   (min-height: 0 + overflow-y: auto) or it just grows with its content. */
+.rail-list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0 -12px;
+  padding: 0 12px;
 }
 
 .rail-label {
@@ -2182,4 +2198,52 @@ button.small:hover {
 
 .voice-transcript .chat-scroll {
   padding: 8px 20px 16px;
+}
+
+/* offline-mode toggle (sidebar bottom, both portals) */
+
+.offline-toggle {
+  flex-shrink: 0;
+  padding: 10px 10px 12px;
+  border-top: 1px dashed var(--line-strong);
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.offline-toggle .toggle-switch {
+  justify-content: space-between;
+  width: 100%;
+}
+
+.offline-toggle-hint {
+  font-size: 10.5px;
+  color: var(--faint);
+  padding-left: 1px;
+}
+
+/* dark variant — admin's side-nav is the dark ink theme, not the cream surface */
+
+.offline-toggle.dark {
+  border-top-color: #37352e;
+}
+
+.offline-toggle.dark .toggle-switch-label {
+  color: var(--on-dark-muted);
+}
+
+.offline-toggle.dark .toggle-switch-track {
+  background: var(--ink-4);
+}
+
+.offline-toggle.dark .toggle-switch-track.on {
+  background: var(--on-dark);
+}
+
+.offline-toggle.dark .toggle-switch-track.on .toggle-switch-knob {
+  background: var(--ink-2);
+}
+
+.offline-toggle.dark .offline-toggle-hint {
+  color: var(--on-dark-muted);
 }

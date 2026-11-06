@@ -11,7 +11,7 @@ import type {
 } from './types';
 import { AUTH_STORAGE_KEY } from './auth/storageKey';
 
-export const BASE = import.meta.env.VITE_API_BASE ?? 'http://localhost:3001';
+export const BASE = (import.meta.env.VITE_API_BASE ?? 'http://localhost:3001').trim().replace(/\/+$/, '');
 
 function readStoredToken(): string | null {
   try {
@@ -83,4 +83,8 @@ export const api = {
   listHandoffs: () => request<HandoffRecord[]>('/handoffs'),
   setHandoffStatus: (id: string, status: HandoffStatus) =>
     request<HandoffRecord>(`/handoffs/${id}`, { method: 'PATCH', body: JSON.stringify({ status }) }),
+
+  getOfflineMode: () => request<{ forced: boolean; llmConfigured: boolean }>('/agent-mode'),
+  setOfflineMode: (forced: boolean) =>
+    request<{ forced: boolean; llmConfigured: boolean }>('/agent-mode', { method: 'PUT', body: JSON.stringify({ forced }) }),
 };

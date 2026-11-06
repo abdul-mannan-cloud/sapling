@@ -53,8 +53,20 @@ export class RuleAgentService {
       };
     }
 
-    // Step 4
-    if (/book/.test(lower) && /(yet|already|confirm)/.test(lower)) {
+    // A bare greeting isn't a request — filing it as a handoff would be
+    // exactly the kind of "avoidable staff follow-up" the brief scores
+    // against. Anchored to the *whole* message (not just the start) so
+    // "hi, can I get a refill" still falls through to the refill branch
+    // below instead of getting swallowed here.
+    if (/^(hi|hello|hey|hiya|yo|good (morning|afternoon|evening))[!.\s]*$/i.test(lower)) {
+      return {
+        mode: 'rule',
+        reply: `Hi ${patient.preferred_name}! I'm the Sapling Family Clinic messaging assistant. I can help with appointment requests, refills, billing questions, or general clinic info — what can I help with?`,
+      };
+    }
+
+    // Step 4 — "is it booked/confirmed yet" and plain variants like "is it confirmed?".
+    if (/\b(booked|confirm(ed)?)\b/.test(lower)) {
       if (existingApptReq) {
         const d = existingApptReq.details as { date: string; window: string };
         return {
@@ -65,8 +77,8 @@ export class RuleAgentService {
       return { mode: 'rule', reply: `I don't have a pending appointment request on file for you right now.` };
     }
 
-    // Step 5
-    if (/next appointment/.test(lower)) {
+    // Step 5 — "next/latest/upcoming/my appointment(s)", plus "when is my appointment" phrasing.
+    if (/\b(next|latest|upcoming|my)\s+appointments?\b|appointments?\b.*\bdo i have\b|when.{0,20}\bappointment/.test(lower)) {
       const upcoming = patient.upcoming_appointments[0];
       let reply = upcoming
         ? `Your next confirmed appointment is ${formatDateLong(upcoming.date)} at ${upcoming.time} with ${upcoming.provider} (${upcoming.type}).`

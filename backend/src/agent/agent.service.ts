@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { emergencyReplyFor, isEmergency } from './emergency.js';
 import { RuleAgentService } from './rule-agent.service.js';
 import { LlmAgentService } from './llm-agent.service.js';
+import { OfflineModeService } from '../agent-mode/offline-mode.service.js';
 import type { AgentContext, AgentResult } from './types.js';
 
 /**
@@ -16,6 +17,7 @@ export class AgentService {
   constructor(
     private readonly ruleAgent: RuleAgentService,
     private readonly llmAgent: LlmAgentService,
+    private readonly offlineMode: OfflineModeService,
   ) {}
 
   async handle(ctx: AgentContext): Promise<AgentResult> {
@@ -31,7 +33,13 @@ export class AgentService {
       };
     }
 
-    if (this.llmAgent.isConfigured()) {
+    // A manual override (sidebar toggle, either role) always wins, even
+    // with an API key configured — this is what actually demonstrates
+    // the offline path on demand, rather than only ever running it when
+    // OPENAI_API_KEY happens to be unset.
+    const forcedOffline = await this.offlineMode.isForced();
+
+    if (!forcedOffline && this.llmAgent.isConfigured()) {
       try {
         return await this.llmAgent.run(ctx);
       } catch (err) {
