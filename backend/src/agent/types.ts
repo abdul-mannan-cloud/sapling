@@ -20,6 +20,8 @@ export interface AgentContext {
   /** All of this patient's existing handoff records, any status. */
   handoffs: HandoffRecord[];
   currentMessage: ThreadMessage;
+  /** Which channel this turn came in on — only affects the exact emergency wording ("text line" vs "voice service"). Defaults to 'text'. */
+  channel?: 'text' | 'voice';
 }
 
 export interface HandoffAction {

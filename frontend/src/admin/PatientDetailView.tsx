@@ -5,6 +5,7 @@ import { useChat } from '../shared/useChat';
 import { ChatThread } from '../shared/ChatThread';
 import { Composer } from '../shared/Composer';
 import { PatientPanel } from '../components/PatientPanel';
+import { IconBack, IconPlus } from '../components/Icons';
 import type { OpenSlot, PatientRecord } from '../types';
 
 export function PatientDetailView({
@@ -22,7 +23,7 @@ export function PatientDetailView({
 
   const { conversations, refresh } = useConversations(patientId);
   const [activeId, setActiveId] = useState<string | null>(initialConversationId ?? null);
-  const { messages, sendMessage } = useChat(activeId);
+  const { messages, sendMessage, awaitingReply } = useChat(activeId);
 
   useEffect(() => {
     api.getPatient(patientId).then(setPatient);
@@ -45,36 +46,41 @@ export function PatientDetailView({
   return (
     <div className="admin-main patient-detail">
       <div className="patient-detail-header">
-        <button className="small" onClick={onBack}>
-          ← Back to patients
+        <button className="btn ghost small" onClick={onBack}>
+          <IconBack size={14} />
+          Patients
         </button>
         <h2 className="section-title">{patient?.name ?? patientId}</h2>
       </div>
 
       <div className="patient-detail-body">
         <div className="chat-column">
-          <div style={{ display: 'flex', gap: 6, padding: '10px 16px', borderBottom: '1px solid var(--border)', overflowX: 'auto' }}>
+          <div className="thread-tabs">
             {conversations.map((c) => (
               <div
                 key={c.id}
                 className={`conversation-item${c.id === activeId ? ' active' : ''}`}
-                style={{ minWidth: 160 }}
                 onClick={() => setActiveId(c.id)}
               >
-                <span style={{ fontSize: 12, fontWeight: 600 }}>{c.title ?? new Date(c.createdAt).toLocaleString()}</span>
+                <span className="tab-title">{c.title ?? new Date(c.createdAt).toLocaleDateString()}</span>
                 <span className="preview">{c.lastMessage ? c.lastMessage.body : 'No messages yet'}</span>
               </div>
             ))}
-            <button className="small" onClick={handleNew}>
-              + New conversation
+            <button className="btn ghost small" style={{ alignSelf: 'center', margin: '0 4px' }} onClick={handleNew}>
+              <IconPlus size={14} />
+              New thread
             </button>
           </div>
 
-          <div className="chat-header">{activeConversation?.title ?? (activeId ? 'Untitled chat' : 'No chat selected')}</div>
+          <div className="chat-header">
+            <span className="chat-header-title">{activeConversation?.title ?? (activeId ? 'Untitled chat' : 'No chat selected')}</span>
+            <span className="chat-header-sub">outbound threads read by the patient in their app</span>
+          </div>
 
           <ChatThread
             messages={messages}
             emptyHint="No messages yet. Start this thread with an outbound message to the patient."
+            typing={awaitingReply}
           />
           <Composer placeholder="Message this patient as clinic staff…" disabled={!activeId} onSend={sendMessage} />
         </div>

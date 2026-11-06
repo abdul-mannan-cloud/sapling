@@ -62,11 +62,11 @@ export class ConversationService {
     return this.prisma.conversation.create({ data: { patientId, title } });
   }
 
-  /** `patientId` omitted means "all patients" — used by the admin's global "All Chats" tab. */
+  /** `patientId` omitted means "all patients" — used by the admin's global "All Chats" tab. Ordered by real last activity (see `touchConversation`), newest first. */
   async list(patientId?: string) {
     const conversations = await this.prisma.conversation.findMany({
       where: patientId ? { patientId } : undefined,
-      orderBy: { createdAt: 'desc' },
+      orderBy: { updatedAt: 'desc' },
       include: { messages: { orderBy: { createdAt: 'desc' }, take: 1 } },
     });
     return conversations.map((c) => ({
@@ -94,6 +94,25 @@ export class ConversationService {
     return convo;
   }
 
+  /**
+   * Prisma's `@updatedAt` only fires on a direct update of the row itself
+   * — creating a related Message never touches it. Without this,
+   * `updatedAt` only ever changes via `rename()`, so it's meaningless as
+   * a "last activity" signal and sorting by it (or by `createdAt`) just
+   * reflects creation order forever. Called once per message stored, so
+   * `list()`'s ordering reflects real recency, not just rename history.
+   *
+   * `data: {}` looks like it should be enough, but Prisma only emits
+   * `updatedAt` in the SQL `SET` clause when at least one other field is
+   * also being set — an empty `data` silently produces no-op SQL and
+   * `updatedAt` never moves (verified directly against this schema).
+   * Self-assigning `patientId` forces a real field into the update so
+   * `@updatedAt` actually fires.
+   */
+  private touchConversation(conversationId: string, patientId: string) {
+    return this.prisma.conversation.update({ where: { id: conversationId }, data: { patientId } });
+  }
+
   async rename(conversationId: string, title: string) {
     await this.assertConversation(conversationId);
     const row = await this.prisma.conversation.update({ where: { id: conversationId }, data: { title } });
@@ -113,22 +132,44 @@ export class ConversationService {
       const row = await this.prisma.message.create({
         data: { conversationId: convo.id, sender: 'clinic', body },
       });
+      await this.touchConversation(convo.id, convo.patientId);
       return { patientMessage: toThreadMessage(row) };
     });
   }
 
-  /** Inbound message entered as "Alex" — stored, then run through the agent, which may answer directly and/or create/update a handoff. */
-  async addPatientMessage(conversationId: string, body: string): Promise<SendMessageResult> {
-    return this.withLock(conversationId, () => this.addPatientMessageUnlocked(conversationId, body));
+  /**
+   * Inbound message entered as "Alex" — stored, then run through the
+   * agent, which may answer directly and/or create/update a handoff.
+   *
+   * `onStored` fires the instant the patient's own message is persisted,
+   * *before* the agent runs — the agent call (especially the LLM path)
+   * can take seconds, and without this callback nothing reaches the
+   * client until that whole round trip finishes, making the sender's own
+   * message look "stuck" for as long as the agent takes to reply.
+   */
+  async addPatientMessage(
+    conversationId: string,
+    body: string,
+    onStored?: (message: ThreadMessage) => void,
+    channel: 'text' | 'voice' = 'text',
+  ): Promise<SendMessageResult> {
+    return this.withLock(conversationId, () => this.addPatientMessageUnlocked(conversationId, body, onStored, channel));
   }
 
-  private async addPatientMessageUnlocked(conversationId: string, body: string): Promise<SendMessageResult> {
+  private async addPatientMessageUnlocked(
+    conversationId: string,
+    body: string,
+    onStored?: (message: ThreadMessage) => void,
+    channel: 'text' | 'voice' = 'text',
+  ): Promise<SendMessageResult> {
     const convo = await this.assertConversation(conversationId);
 
     const patientRow = await this.prisma.message.create({
       data: { conversationId: convo.id, sender: 'patient', body },
     });
     const patientMessage = toThreadMessage(patientRow);
+    await this.touchConversation(convo.id, convo.patientId);
+    onStored?.(patientMessage);
 
     const historyRows = await this.prisma.message.findMany({
       where: { conversationId: convo.id },
@@ -151,6 +192,7 @@ export class ConversationService {
       history,
       handoffs: handoffRecords,
       currentMessage: patientMessage,
+      channel,
     });
 
     let handoff: HandoffRecord | undefined;
@@ -176,6 +218,7 @@ export class ConversationService {
     const agentRow = await this.prisma.message.create({
       data: { conversationId: convo.id, sender: 'agent', body: result.reply },
     });
+    await this.touchConversation(convo.id, convo.patientId);
 
     return { patientMessage, agentMessage: toThreadMessage(agentRow), handoff, mode: result.mode };
   }

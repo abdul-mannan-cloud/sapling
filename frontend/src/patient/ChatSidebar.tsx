@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import type { ConversationSummary } from '../types';
+import { IconPencil, IconPlus, IconTrash } from '../components/Icons';
 
 export function ChatSidebar({
   conversations,
@@ -30,11 +31,13 @@ export function ChatSidebar({
   };
 
   return (
-    <div className="panel chat-sidebar-panel">
+    <div className="rail">
       <button className="new-chat-btn" onClick={onNew}>
-        + New chat
+        <IconPlus size={15} />
+        New chat
       </button>
-      {conversations.length === 0 && <div className="empty-state">No chats yet.</div>}
+      <div className="rail-label">Your chats</div>
+      {conversations.length === 0 && <div className="empty-state">No chats yet — start one above.</div>}
       {conversations.map((c) => (
         <div key={c.id} className={`chat-list-item${c.id === activeId ? ' active' : ''}`} onClick={() => onSelect(c.id)}>
           {renamingId === c.id ? (
@@ -56,16 +59,20 @@ export function ChatSidebar({
               <div className="preview">{c.lastMessage ? c.lastMessage.body : 'No messages yet'}</div>
               <div className="chat-list-actions">
                 <button
-                  className="small"
+                  className="icon-btn"
+                  aria-label="Rename chat"
+                  title="Rename"
                   onClick={(e) => {
                     e.stopPropagation();
                     startRename(c);
                   }}
                 >
-                  Rename
+                  <IconPencil size={13} />
                 </button>
                 <button
-                  className="small"
+                  className="icon-btn danger"
+                  aria-label="Delete chat"
+                  title="Delete"
                   onClick={(e) => {
                     e.stopPropagation();
                     if (confirm('Delete this chat? Any pending staff requests it created will stay in the staff queue.')) {
@@ -73,7 +80,7 @@ export function ChatSidebar({
                     }
                   }}
                 >
-                  Delete
+                  <IconTrash size={13} />
                 </button>
               </div>
             </>

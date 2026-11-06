@@ -23,8 +23,11 @@ export function useHandoffs() {
       });
     };
     socket.on('handoff', onHandoff);
+    // Catch up on anything missed while disconnected — see useConversations.
+    socket.on('connect', refresh);
     return () => {
       socket.off('handoff', onHandoff);
+      socket.off('connect', refresh);
     };
   }, [socket]);
 

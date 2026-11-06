@@ -1,8 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
 import { api, setAuthToken } from '../api';
+import { AUTH_STORAGE_KEY as STORAGE_KEY } from './storageKey';
 import type { AuthState } from '../types';
-
-const STORAGE_KEY = 'sapling_auth';
 
 interface AuthContextValue {
   auth: AuthState | null;

@@ -8,7 +8,10 @@ export function useConversations(patientId?: string) {
   const socket = useSocket();
   const [conversations, setConversations] = useState<ConversationSummary[]>([]);
 
-  const refresh = () => api.listConversations(patientId).then(setConversations);
+  // Returns the fetched list too, so a caller that needs the fresh data
+  // right away (e.g. picking a new active chat after deleting one) doesn't
+  // have to issue a second, redundant listConversations call.
+  const refresh = () => api.listConversations(patientId).then((list) => (setConversations(list), list));
 
   useEffect(() => {
     refresh();
@@ -28,8 +31,14 @@ export function useConversations(patientId?: string) {
       });
     };
     socket.on('conversation_updated', onUpdate);
+    // Catch up on anything missed while disconnected (server restart, a
+    // dropped connection) — the server re-adds a reconnecting socket to
+    // its role room automatically, but any updates that happened in the
+    // gap were never seen, so a plain re-fetch on every (re)connect fixes it.
+    socket.on('connect', refresh);
     return () => {
       socket.off('conversation_updated', onUpdate);
+      socket.off('connect', refresh);
     };
   }, [socket, patientId]);
 

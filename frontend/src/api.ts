@@ -9,12 +9,30 @@ import type {
   Role,
   ThreadMessage,
 } from './types';
+import { AUTH_STORAGE_KEY } from './auth/storageKey';
 
 export const BASE = import.meta.env.VITE_API_BASE ?? 'http://localhost:3001';
 
-let authToken: string | null = null;
+function readStoredToken(): string | null {
+  try {
+    const raw = localStorage.getItem(AUTH_STORAGE_KEY);
+    return raw ? (JSON.parse(raw).token ?? null) : null;
+  } catch {
+    return null;
+  }
+}
 
-/** Called by AuthContext whenever login/logout happens so every api.* call below is authenticated without threading the token through every call site. */
+// Seeded synchronously at module load — before React (or any component
+// effect) ever runs — rather than waiting for AuthProvider's effect to call
+// setAuthToken(). Effects fire child-first, so on first mount a child
+// component's own data-fetching effect (e.g. PatientApp loading the
+// patient record) can run before AuthProvider's effect has had a chance
+// to sync the token, sending that first round of requests out with no
+// Authorization header at all. Reading localStorage directly here closes
+// that window entirely.
+let authToken: string | null = readStoredToken();
+
+/** Called by AuthContext on login/logout to keep this in sync after the initial load. */
 export function setAuthToken(token: string | null) {
   authToken = token;
 }

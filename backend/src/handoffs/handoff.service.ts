@@ -28,10 +28,11 @@ function toRecord(row: HandoffRequest): HandoffRecord {
 export class HandoffService {
   constructor(private readonly prisma: PrismaService) {}
 
+  /** Newest-activity-first by default — a record a later message updates (e.g. the date changing) should surface before one that's just sat untouched since it was filed. */
   async list(patientId?: string): Promise<HandoffRecord[]> {
     const rows = await this.prisma.handoffRequest.findMany({
       where: patientId ? { patientId } : undefined,
-      orderBy: { createdAt: 'desc' },
+      orderBy: { updatedAt: 'desc' },
     });
     return rows.map(toRecord);
   }

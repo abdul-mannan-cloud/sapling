@@ -23,4 +23,14 @@ describe('pruneNulls', () => {
   it('returns an empty object when everything is null', () => {
     expect(pruneNulls({ a: null, b: null })).toEqual({});
   });
+
+  it('strips stray JSON syntax a model occasionally appends to a free-text field', () => {
+    // Observed from gpt-4o-mini in practice: "13:30}}}}}]}" instead of "13:30".
+    expect(pruneNulls({ slot_start: '13:30}}}}}]}' })).toEqual({ slot_start: '13:30' });
+    expect(pruneNulls({ window: 'afternoon}}}]}' })).toEqual({ window: 'afternoon' });
+  });
+
+  it('leaves ordinary values with no stray syntax untouched', () => {
+    expect(pruneNulls({ question: 'do you take Aetna?' })).toEqual({ question: 'do you take Aetna?' });
+  });
 });

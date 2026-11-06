@@ -12,12 +12,20 @@ const DEFAULT_NOW = '2026-11-04T10:00:00-08:00';
 export class ClockService {
   constructor(private readonly prisma: PrismaService) {}
 
+  /**
+   * Lazily seeds the clock row on first use. Must be an atomic upsert, not
+   * find-then-create: addPatientMessage fires getNowIso() and describeNow()
+   * (which also calls this) via Promise.all, so on a brand-new database the
+   * very first message always produces two concurrent calls that would
+   * otherwise both see no row and both try to create it, crashing on the
+   * unique constraint.
+   */
   async getNowIso(): Promise<string> {
-    const row = await this.prisma.setting.findUnique({ where: { key: CLOCK_KEY } });
-    if (!row) {
-      await this.prisma.setting.create({ data: { key: CLOCK_KEY, value: DEFAULT_NOW } });
-      return DEFAULT_NOW;
-    }
+    const row = await this.prisma.setting.upsert({
+      where: { key: CLOCK_KEY },
+      create: { key: CLOCK_KEY, value: DEFAULT_NOW },
+      update: {},
+    });
     return row.value;
   }
 

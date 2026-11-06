@@ -72,6 +72,10 @@ The brief's Phase 1 didn't ask for auth, multiple logins, sockets, or an admin d
 - **Workflow correctness & persistence:** strengthened. Access is now actually enforced per-role (a patient can't list other patients, can't delete another patient's chat, can't call admin-only endpoints) rather than assumed by UI convention.
 - **Scope:** this is meaningfully more surface area than a 3-hour Phase 1 was meant to have. If this were being scored strictly against the original brief, the honest framing is: Phase 1's required behavior is the part in `test-evidence.md`; auth/sockets/dashboard are a product-direction extension on top of it.
 
+## Design system
+
+The UI carries Sapling Health's brand so it reads as an internal product rather than a demo: **Inter** (their brand font, self-hosted via `@fontsource-variable/inter` — no external font requests), the two-leaf **shoot mark** lifted from saplinghealth.com's favicon (`components/Logo.tsx`, recolorable via `currentColor`) with the lowercase `sapling` wordmark treatment, and their warm-monochrome palette — near-black greens `#0A0B0A/#101210/#141715/#2A2622` on creams `#FBFAF7/#F1F0ED/#ECEAE5`. The site itself is monochrome, so the only added chroma is the semantic set an internal tool can't do without: amber *pending staff*, leaf-green *resolved*, red *emergency* (cards get a red-tinted border wash). All of it lives as CSS variables at the top of `frontend/src/index.css`.
+
 ## Architecture
 
 ```

@@ -36,3 +36,11 @@ export function isEmergency(text: string): boolean {
 
 export const EMERGENCY_REPLY_TEXT =
   'If you think you are having a medical emergency, call 911 or go to the nearest emergency room now. This text line is not monitored continuously and cannot help in an emergency.';
+
+/** Required wording for the voice channel — same message, "This voice service" in place of "This text line". */
+export const EMERGENCY_REPLY_VOICE =
+  'If you think you are having a medical emergency, call 911 or go to the nearest emergency room now. This voice service is not monitored continuously and cannot help in an emergency.';
+
+export function emergencyReplyFor(channel: 'text' | 'voice'): string {
+  return channel === 'voice' ? EMERGENCY_REPLY_VOICE : EMERGENCY_REPLY_TEXT;
+}

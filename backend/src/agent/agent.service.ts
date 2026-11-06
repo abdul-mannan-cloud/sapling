@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { EMERGENCY_REPLY_TEXT, isEmergency } from './emergency.js';
+import { emergencyReplyFor, isEmergency } from './emergency.js';
 import { RuleAgentService } from './rule-agent.service.js';
 import { LlmAgentService } from './llm-agent.service.js';
 import type { AgentContext, AgentResult } from './types.js';
@@ -22,7 +22,7 @@ export class AgentService {
     if (isEmergency(ctx.currentMessage.body)) {
       return {
         mode: 'emergency',
-        reply: EMERGENCY_REPLY_TEXT,
+        reply: emergencyReplyFor(ctx.channel ?? 'text'),
         handoffAction: {
           operation: 'create',
           type: 'emergency',

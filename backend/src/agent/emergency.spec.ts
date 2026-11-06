@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { isEmergency } from './emergency.js';
+import { EMERGENCY_REPLY_TEXT, EMERGENCY_REPLY_VOICE, emergencyReplyFor, isEmergency } from './emergency.js';
 
 describe('isEmergency', () => {
   it('flags the scripted step 11 message', () => {
@@ -25,5 +25,19 @@ describe('isEmergency', () => {
     'why do I owe $40?',
   ])('does not flag routine message "%s"', (text) => {
     expect(isEmergency(text)).toBe(false);
+  });
+});
+
+describe('emergencyReplyFor', () => {
+  it('uses "This text line" for the text channel (default)', () => {
+    expect(emergencyReplyFor('text')).toBe(EMERGENCY_REPLY_TEXT);
+    expect(EMERGENCY_REPLY_TEXT).toContain('This text line');
+  });
+
+  it('uses "This voice service" for the voice channel, with the rest of the sentence identical', () => {
+    expect(emergencyReplyFor('voice')).toBe(EMERGENCY_REPLY_VOICE);
+    expect(EMERGENCY_REPLY_VOICE).toContain('This voice service');
+    // Only that one phrase should differ between the two channels.
+    expect(EMERGENCY_REPLY_VOICE.replace('This voice service', 'This text line')).toBe(EMERGENCY_REPLY_TEXT);
   });
 });
