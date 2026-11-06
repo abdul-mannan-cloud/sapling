@@ -1,0 +1,223 @@
+import { Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import OpenAI from 'openai';
+import type { AgentContext, AgentResult, HandoffAction } from './types.js';
+import type { HandoffType } from '../handoffs/handoff.types.js';
+
+const CREATABLE_TYPES: HandoffType[] = ['appointment_request', 'refill', 'clinical_question', 'billing', 'other'];
+
+const DETAIL_FIELDS = [
+  'reason',
+  'provider',
+  'date',
+  'window',
+  'slot_start',
+  'medication',
+  'dose',
+  'frequency',
+  'pharmacy',
+  'question',
+  'readings',
+  'message',
+] as const;
+
+/**
+ * `window` only ever takes one of three values. Constraining it with an
+ * enum (instead of a free string, like the other detail fields) makes a
+ * past failure mode structurally impossible: under the free-string
+ * schema, gpt-4o-mini occasionally emitted a corrupted value for this
+ * specific field (e.g. "afternoon}}}]}" — stray JSON syntax leaking into
+ * the string) a couple of turns into a multi-turn update chain. An enum
+ * is enforced by constrained decoding, so the model literally cannot
+ * produce a value outside the three options.
+ */
+const DETAIL_FIELD_SCHEMA: Record<string, Record<string, unknown>> = Object.fromEntries(
+  DETAIL_FIELDS.map((f) =>
+    f === 'window'
+      ? [f, { type: ['string', 'null'], enum: ['morning', 'afternoon', 'evening', null] }]
+      : [f, { type: ['string', 'null'] }],
+  ),
+);
+
+const RESPONSE_SCHEMA = {
+  name: 'agent_response',
+  strict: true,
+  schema: {
+    type: 'object',
+    properties: {
+      reply: { type: 'string', description: "The message to send back to Alex. Never medical advice, never an invented policy or deadline." },
+      handoff_action: {
+        type: ['object', 'null'],
+        description: 'Null if no handoff needs to be created or updated this turn.',
+        properties: {
+          operation: { type: 'string', enum: ['create', 'update'] },
+          handoff_id: {
+            type: ['string', 'null'],
+            description: 'Required and must match an existing handoff id from context when operation is update; null when creating.',
+          },
+          type: { type: 'string', enum: CREATABLE_TYPES },
+          details: {
+            type: 'object',
+            description: 'Only fill fields relevant to `type`; leave the rest null.',
+            properties: DETAIL_FIELD_SCHEMA,
+            required: DETAIL_FIELDS as unknown as string[],
+            additionalProperties: false,
+          },
+        },
+        required: ['operation', 'handoff_id', 'type', 'details'],
+        additionalProperties: false,
+      },
+    },
+    required: ['reply', 'handoff_action'],
+    additionalProperties: false,
+  },
+} as const;
+
+interface RawDetails {
+  [key: string]: string | null;
+}
+
+/**
+ * Defensive backstop for a real structured-output glitch observed from
+ * gpt-4o-mini: occasionally, whichever free-string detail field it fills
+ * last in a turn comes back with stray JSON syntax appended after the
+ * real value (e.g. "13:30}}}}}]}" instead of "13:30"). An enum field
+ * (see `window` above) can't have this happen at all under strict mode,
+ * but fields like `slot_start`/`reason`/`question` are inherently free
+ * text and can't be enum-constrained. None of our legitimate values ever
+ * contain `{`, `}`, `[`, or `]`, so truncating at the first occurrence of
+ * any of those is a safe, general cleanup rather than a guess at which
+ * field might be hit next.
+ */
+function sanitizeDetailValue(value: string): string {
+  return value.split(/[{}[\]]/)[0].trim();
+}
+
+export function pruneNulls(details: RawDetails): Record<string, unknown> {
+  const out: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(details)) {
+    if (v !== null && v !== undefined) out[k] = sanitizeDetailValue(v);
+  }
+  return out;
+}
+
+@Injectable()
+export class LlmAgentService {
+  private readonly logger = new Logger(LlmAgentService.name);
+  private client: OpenAI | null = null;
+
+  constructor(private readonly config: ConfigService) {}
+
+  isConfigured(): boolean {
+    return Boolean(this.config.get<string>('OPENAI_API_KEY'));
+  }
+
+  private getClient(): OpenAI {
+    if (!this.client) {
+      this.client = new OpenAI({ apiKey: this.config.get<string>('OPENAI_API_KEY') });
+    }
+    return this.client;
+  }
+
+  async run(ctx: AgentContext): Promise<AgentResult> {
+    const model = this.config.get<string>('OPENAI_MODEL') ?? 'gpt-4o-mini';
+    const client = this.getClient();
+
+    const completion = await client.chat.completions.create({
+      model,
+      temperature: 0,
+      messages: [
+        { role: 'system', content: buildSystemPrompt(ctx) },
+        { role: 'user', content: buildUserPrompt(ctx) },
+      ],
+      response_format: { type: 'json_schema', json_schema: RESPONSE_SCHEMA },
+    });
+
+    const raw = completion.choices[0]?.message?.content;
+    if (!raw) {
+      this.logger.error('LLM returned no content, falling back to a safe generic reply');
+      return {
+        mode: 'llm',
+        reply: "Thanks for your message. I've passed it to staff for review.",
+        handoffAction: { operation: 'create', type: 'other', details: { message: ctx.currentMessage.body } },
+      };
+    }
+
+    const parsed = JSON.parse(raw) as {
+      reply: string;
+      handoff_action: null | { operation: 'create' | 'update'; handoff_id: string | null; type: HandoffType; details: RawDetails };
+    };
+
+    let handoffAction: HandoffAction | undefined;
+    if (parsed.handoff_action) {
+      const h = parsed.handoff_action;
+      handoffAction = {
+        operation: h.operation,
+        handoffId: h.handoff_id ?? undefined,
+        type: h.type,
+        details: pruneNulls(h.details),
+      };
+    }
+
+    return { mode: 'llm', reply: parsed.reply, handoffAction };
+  }
+}
+
+function buildSystemPrompt(ctx: AgentContext): string {
+  return `You are the messaging agent for Sapling Family Clinic, texting with patient ${ctx.patient.preferred_name}.
+
+Your job each turn: read the full thread, the patient record, the clinic FAQ, the open slots, and the patient's existing handoff requests, then either answer directly from that data or file/update a handoff for staff. You never book, reschedule, or cancel appointments, approve refills, or change the clinical record — you only draft a reply and optionally create/update a pending_staff handoff for staff to act on.
+
+Hard rules:
+- Never give medical/clinical advice, even if asked directly (e.g. about dosing or symptoms). Acknowledge, say you can't advise, and file a clinical_question handoff with the details captured.
+- Never invent clinic policy. The FAQ is the only source of policy truth; if it doesn't cover something, say so and don't guess.
+- Never claim an appointment is booked or a request is saved unless that's actually true based on the data given to you. A pending appointment_request handoff is NOT a booked appointment.
+- Never invent a response-time promise or review deadline. Texts are read during business hours and are not monitored continuously.
+- Don't ask the patient for information already present in their record or the thread (e.g. don't ask why they need a BP recheck — it's already known from last_visit.plan_note).
+- If a pending appointment_request already exists in the thread/handoffs for the same reason, UPDATE that same handoff (reuse its id) instead of creating a second one when the patient changes their preference.
+- Never create an appointment_request with a guessed date. If the patient has only confirmed they *want* an appointment (e.g. just replied "yes" to an offer) but hasn't named a day yet, ask them when they'd like to come in — don't pick a slot for them and don't produce a handoff_action yet.
+- Once the patient names a day plus a rough time-of-day (e.g. "Tuesday afternoon"), that is enough to create/update the request right away — do NOT ask them to also pick an exact time before filing it. \`slot_start\` is optional and should stay null unless they volunteer a specific time themselves; never ask for one just to fill it in, and never pick one of the open_slots' exact times yourself and present it as if the patient chose it. When you don't have a specific time, describe the request back using the day and window only (e.g. "Thursday afternoon"), not an invented clock time.
+- To resolve a weekday the patient mentions (e.g. "Tuesday", "Thursday"), match it against the provided open_slots list by weekday — don't do generic calendar math. In this scenario there are exactly two candidate dates, Nov 10 (Tuesday) and Nov 12 (Thursday); use whichever slot's weekday matches what the patient said.
+- Only produce a handoff_action when a new request is being created or an existing one is being changed. Plain informational answers (hours, balance, next appointment, "is it booked") need no handoff_action.
+- Whenever you file a handoff because you can't answer something yourself (an unknown policy, an open question, anything else outside the supplied data), tell the patient you're passing it to staff for review. Don't tell them to call or contact the office themselves instead — that defeats the point of filing the request, unless the FAQ specifically says that's the only way to get that answer.
+- Emergencies are filtered out before you ever see them — you will not be asked to handle one.
+
+Output must match the given JSON schema exactly.`;
+}
+
+function buildUserPrompt(ctx: AgentContext): string {
+  const historyText = ctx.history
+    .map((m) => `[${m.createdAt}] ${m.sender.toUpperCase()}: ${m.body}`)
+    .join('\n');
+  const handoffsText =
+    ctx.handoffs.length === 0
+      ? '(none)'
+      : ctx.handoffs
+          .map((h) => `- id=${h.id} type=${h.type} status=${h.status} details=${JSON.stringify(h.details)}`)
+          .join('\n');
+  const slotsText = ctx.openSlots.map((s) => `- ${s.date} (${weekdayLabel(s.date)}) ${s.start} with ${s.provider}`).join('\n');
+
+  return `CURRENT TIME: ${ctx.nowDescription} (${ctx.nowIso})
+
+PATIENT RECORD:
+${JSON.stringify(ctx.patient, null, 2)}
+
+CLINIC FAQ:
+${ctx.faqText}
+
+OPEN SLOTS (read-only; you may suggest these, never reserve them):
+${slotsText}
+
+EXISTING HANDOFF REQUESTS FROM THIS CONVERSATION (a different chat thread for this patient may have its own separate requests you don't see here):
+${handoffsText}
+
+CONVERSATION THREAD (oldest first, ends with the message you're responding to):
+${historyText}
+
+Respond to the most recent PATIENT message.`;
+}
+
+function weekdayLabel(dateStr: string): string {
+  const [y, m, d] = dateStr.split('-').map(Number);
+  return new Intl.DateTimeFormat('en-US', { weekday: 'long', timeZone: 'UTC' }).format(new Date(Date.UTC(y, m - 1, d)));
+}

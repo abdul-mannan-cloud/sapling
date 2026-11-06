@@ -1,0 +1,94 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum MessageSender {
+  clinic
+  patient
+  agent
+}
+
+enum HandoffType {
+  appointment_request
+  refill
+  clinical_question
+  billing
+  other
+  emergency
+}
+
+enum HandoffStatus {
+  pending_staff
+  resolved
+  cancelled
+}
+
+enum Role {
+  admin
+  patient
+}
+
+/// Seeded login accounts. There's no self-signup — this is a local demo
+/// with exactly one admin and one patient (Alex) account, created on
+/// first boot by AuthService if the table is empty.
+model User {
+  id           String   @id @default(cuid())
+  username     String   @unique
+  passwordHash String
+  role         Role
+  /// Set only for role=patient; links the login to the synthetic patient record.
+  patientId    String?
+  createdAt    DateTime @default(now())
+}
+
+model Conversation {
+  id        String    @id @default(cuid())
+  patientId String
+  /// Patient-editable chat title for the multi-chat sidebar; null until renamed.
+  title     String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  messages  Message[]
+}
+
+model Message {
+  id             String        @id @default(cuid())
+  conversationId String
+  conversation   Conversation  @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender         MessageSender
+  body           String
+  createdAt      DateTime      @default(now())
+}
+
+/// Structured handoff record staff can act on. `details` and `messageIds`
+/// are stored as JSON strings (SQLite has no native JSON type) and
+/// parsed/serialized in the service layer.
+model HandoffRequest {
+  id             String        @id @default(cuid())
+  patientId      String
+  /// The conversation this request originated in. A patient can now run
+  /// several concurrent chats (the multi-chat sidebar), so "the pending
+  /// appointment_request to update" must be scoped to this conversation —
+  /// otherwise a message in an unrelated new chat could silently update a
+  /// request that was actually created in a different thread.
+  conversationId String
+  type           HandoffType
+  status         HandoffStatus @default(pending_staff)
+  details        String
+  messageIds     String
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+}
+
+/// Single-row-per-key settings store. Used to hold the simulated "now"
+/// clock so the scenario's date math doesn't depend on the host machine's
+/// real clock.
+model Setting {
+  key   String @id
+  value String
+}
