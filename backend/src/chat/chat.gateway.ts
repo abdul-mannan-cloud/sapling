@@ -1,3 +1,5 @@
+import { HandoffService } from '../handoffs/handoff.service.js';
+import type { HandoffRecord } from '../handoffs/handoff.types.js';
 import { Logger } from '@nestjs/common';
 import {
   ConnectedSocket,
@@ -51,7 +53,25 @@ export class ChatGateway implements OnGatewayConnection {
     private readonly auth: AuthService,
     private readonly conversations: ConversationService,
     private readonly voice: VoiceService,
+    private readonly handoffs: HandoffService,
   ) {}
+
+  private readonly onStatusChanged = ({ record, message }: { record: HandoffRecord; message?: ThreadMessage }) => {
+    this.server.to(adminRoom()).emit('handoff', record);
+    this.server.to(patientRoom(record.patientId)).emit('requests_updated', { id: record.id });
+    if (message) {
+      this.server.to(conversationRoom(record.conversationId)).emit('message', message);
+      this.broadcastConversationUpdate(record.conversationId, record.patientId, message);
+    }
+  };
+
+  onModuleInit() {
+    this.handoffs.events.on('statusChanged', this.onStatusChanged);
+  }
+
+  onModuleDestroy() {
+    this.handoffs.events.off('statusChanged', this.onStatusChanged);
+  }
 
   async handleConnection(client: Socket) {
     const token = client.handshake.auth?.token as string | undefined;

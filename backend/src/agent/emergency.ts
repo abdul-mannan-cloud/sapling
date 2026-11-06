@@ -5,18 +5,26 @@
  */
 const EMERGENCY_PATTERNS: RegExp[] = [
   /chest pain/i,
+  /pain.{0,15}\bchest\b/i,
   /chest\s*tight/i,
+  /pressure.{0,15}\bchest\b/i,
+  /crushing.{0,15}\bchest\b/i,
   /can'?t breathe/i,
   /cannot breathe/i,
   /difficulty breathing/i,
+  /trouble breathing/i,
   /short(ness)? of breath/i,
   /\bnumb(ness)?\b/i,
+  /\btingl(e|ing|es)\b/i,
+  /can'?t feel (my )?(arm|leg|face|hand|foot)/i,
+  /weak(ness)?.{0,20}\bside\b/i,
   /face (is )?droop/i,
   /slurred speech/i,
   /\bstroke\b/i,
   /heart attack/i,
   /unconscious/i,
   /passed out/i,
+  /losing consciousness/i,
   /not breathing/i,
   /severe bleeding/i,
   /bleeding (a lot|heavily|won'?t stop)/i,
@@ -28,6 +36,7 @@ const EMERGENCY_PATTERNS: RegExp[] = [
   /allergic reaction.*(throat|swelling|can'?t breathe)/i,
   /choking/i,
   /seizure/i,
+  /convulsing/i,
 ];
 
 export function isEmergency(text: string): boolean {

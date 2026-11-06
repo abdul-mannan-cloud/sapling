@@ -33,6 +33,14 @@ export class AgentService {
       };
     }
 
+    const pending = ctx.handoffs.filter((h) => h.type === 'appointment_request' && h.status === 'pending_staff');
+    const text = ctx.currentMessage.body.toLowerCase();
+    if (pending.length && /\b(book|schedule|another|additional)\b/.test(text) &&
+        !/\b(change|update|reschedule|instead)\b/.test(text) && !/\b(status|confirmed|approved|pending)\b/.test(text)) {
+      const warning = protectPendingAppointments(ctx, { mode: 'rule', reply: '', handoffAction: { operation: 'create', type: 'appointment_request', details: {} } });
+      if (!warning.handoffAction) return warning;
+    }
+
     // A manual override (sidebar toggle, either role) always wins, even
     // with an API key configured — this is what actually demonstrates
     // the offline path on demand, rather than only ever running it when
@@ -41,13 +49,31 @@ export class AgentService {
 
     if (!forcedOffline && this.llmAgent.isConfigured()) {
       try {
-        return await this.llmAgent.run(ctx);
+        return protectPendingAppointments(ctx, await this.llmAgent.run(ctx));
       } catch (err) {
         this.logger.error('LLM agent failed, falling back to rule agent', err as Error);
-        return this.ruleAgent.run(ctx);
+        return protectPendingAppointments(ctx, this.ruleAgent.run(ctx));
       }
     }
 
-    return this.ruleAgent.run(ctx);
+    return protectPendingAppointments(ctx, this.ruleAgent.run(ctx));
   }
+}
+
+export function protectPendingAppointments(ctx: AgentContext, result: AgentResult): AgentResult {
+  const pending = ctx.handoffs.filter((h) => h.type === 'appointment_request' && h.status === 'pending_staff');
+  if (!pending.length || result.handoffAction?.type !== 'appointment_request' || result.handoffAction.operation !== 'create') return result;
+  const previousReply = [...ctx.history].reverse().find((m) => m.sender === 'agent');
+  // A bare "yes" substring isn't enough — "yes to the existing one, no
+  // additional appointment" would otherwise match /\byes\b/ and be read as
+  // consent despite being an explicit refusal. Require an affirmative with
+  // no contradicting negation anywhere in the same reply.
+  const hasAffirmative = /\b(yes|yeah|yep|sure|proceed|go ahead|still want)\b/i.test(ctx.currentMessage.body);
+  const hasNegation = /\b(no|not|don'?t|do not|never mind|nevermind)\b/i.test(ctx.currentMessage.body);
+  const consent = previousReply?.body.includes('Do you still want an additional appointment request?') && hasAffirmative && !hasNegation;
+  if (consent) return result;
+  return {
+    mode: result.mode,
+    reply: `You already have ${pending.length} pending appointment request${pending.length === 1 ? '' : 's'} awaiting staff review: ${pending.map((h) => [h.details.date, h.details.slot_start || h.details.window, h.details.reason].filter(Boolean).join(', ')).join('; ')}. Do you still want an additional appointment request?`,
+  };
 }

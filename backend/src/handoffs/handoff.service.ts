@@ -1,3 +1,4 @@
+import { EventEmitter } from 'node:events';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service.js';
 import type { HandoffRequest } from '@prisma/client';
@@ -26,6 +27,8 @@ function toRecord(row: HandoffRequest): HandoffRecord {
  */
 @Injectable()
 export class HandoffService {
+  readonly events = new EventEmitter();
+
   constructor(private readonly prisma: PrismaService) {}
 
   /** Newest-activity-first by default — a record a later message updates (e.g. the date changing) should surface before one that's just sat untouched since it was filed. */
@@ -90,8 +93,29 @@ export class HandoffService {
     return toRecord(row);
   }
 
-  async setStatus(id: string, status: HandoffStatus): Promise<HandoffRecord> {
-    const row = await this.prisma.handoffRequest.update({ where: { id }, data: { status } });
-    return toRecord(row);
+  async setStatus(id: string, status: HandoffStatus, actor: 'staff' | 'patient' = 'staff'): Promise<HandoffRecord> {
+    const result = await this.prisma.$transaction(async (tx) => {
+      const previous = await tx.handoffRequest.findUnique({ where: { id } });
+      if (!previous) throw new NotFoundException(`Handoff ${id} not found`);
+      if (previous.status === status) return { record: toRecord(previous) };
+      const row = await tx.handoffRequest.update({ where: { id }, data: { status } });
+      const record = toRecord(row);
+      if (record.type !== 'appointment_request') return { record };
+      // A chat may have been deleted while its independent staff request remains.
+      const conversation = await tx.conversation.findUnique({ where: { id: row.conversationId } });
+      if (!conversation) return { record };
+      const details = record.details;
+      const description = [details.reason, details.date, details.slot_start || details.window, details.provider]
+        .filter(Boolean).join(', ');
+      const state = status === 'resolved' ? 'approved by staff' : status === 'cancelled' ? `cancelled by ${actor === 'patient' ? 'you' : 'staff'}` : 'returned to pending staff review';
+      const message = await tx.message.create({ data: {
+        conversationId: row.conversationId, sender: 'clinic',
+        body: `Your appointment request (${description || 'appointment'}) has been ${state}.`,
+      } });
+      await tx.conversation.update({ where: { id: conversation.id }, data: { patientId: conversation.patientId } });
+      return { record, message: { id: message.id, sender: message.sender, body: message.body, createdAt: message.createdAt.toISOString() } };
+    });
+    this.events.emit('statusChanged', result);
+    return result.record;
   }
 }

@@ -1,3 +1,4 @@
+import { RequestsPanel } from './RequestsPanel';
 import { useEffect, useState } from 'react';
 import { api } from '../api';
 import { useAuth } from '../auth/AuthContext';
@@ -23,6 +24,7 @@ export function PatientApp() {
   const [faq, setFaq] = useState('');
   const [openSlots, setOpenSlots] = useState<OpenSlot[]>([]);
   const [clockDescription, setClockDescription] = useState('');
+  const [portalTab, setPortalTab] = useState<'chat' | 'requests'>('chat');
   const [mode, setMode] = useState<'text' | 'voice'>('text');
   // Off by default — a reply's audio only plays automatically here if the
   // patient opts in. Voice Mode (below) is the exception: it's voice-only
@@ -101,6 +103,8 @@ export function PatientApp() {
           <Logo size={20} sub="Family Clinic" />
         </div>
         <div className="topbar-side">
+          <button className={`btn ${portalTab === 'chat' ? 'dark' : 'ghost'} small`} onClick={() => setPortalTab('chat')}>Chat</button>
+          <button className={`btn ${portalTab === 'requests' ? 'dark' : 'ghost'} small`} onClick={() => setPortalTab('requests')}>Appointments & refills</button>
           {clockDescription && (
             <span className="chip">
               <IconClock size={12} />
@@ -123,7 +127,7 @@ export function PatientApp() {
           onDelete={handleDelete}
         />
 
-        {mode === 'voice' && activeId ? (
+        {portalTab === 'requests' ? <RequestsPanel /> : mode === 'voice' && activeId ? (
           <VoiceMode
             messages={messages}
             awaitingReply={awaitingReply}
@@ -144,7 +148,13 @@ export function PatientApp() {
                 Voice mode
               </button>
             </div>
-            <ChatThread messages={messages} emptyHint="Send a message to start this conversation." typing={awaitingReply || micPending} />
+            <ChatThread
+              messages={messages}
+              emptyHint="Send a message to start this conversation."
+              typing={awaitingReply || micPending}
+              openSlots={openSlots}
+              onQuickAction={sendMessage}
+            />
             <QuickActions openSlots={openSlots} onSend={sendMessage} disabled={!activeId || awaitingReply || micPending} />
             <Composer
               placeholder={awaitingReply || micPending ? 'Waiting for the agent to reply…' : 'Type, or hold the mic to talk…'}

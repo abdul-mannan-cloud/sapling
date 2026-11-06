@@ -1,0 +1,110 @@
+[
+  {
+    "name": "Scripted dosing question remains clinical review",
+    "run": 3,
+    "pass": false,
+    "result": {
+      "mode": "emergency",
+      "reply": "If you think you are having a medical emergency, call 911 or go to the nearest emergency room now. This text line is not monitored continuously and cannot help in an emergency.",
+      "handoffAction": {
+        "operation": "create",
+        "type": "emergency",
+        "details": {
+          "message": "my readings have been around 150/95 all week, should I take two pills?"
+        }
+      }
+    }
+  },
+  {
+    "name": "Scripted dosing question remains clinical review",
+    "run": 2,
+    "pass": true,
+    "result": {
+      "mode": "llm",
+      "reply": "I can't provide medical advice about your medication. However, I will pass your question along to the staff for review.",
+      "handoffAction": {
+        "operation": "create",
+        "type": "clinical_question",
+        "details": {
+          "reason": "Blood pressure readings around 150/95",
+          "provider": "Dr. Priya Lee",
+          "medication": "Lisinopril",
+          "dose": "10 mg",
+          "frequency": "once daily",
+          "question": "Should I take two pills?",
+          "readings": "150/95"
+        }
+      }
+    }
+  },
+  {
+    "name": "Scripted dosing question remains clinical review",
+    "run": 1,
+    "pass": true,
+    "result": {
+      "mode": "llm",
+      "reply": "I can't provide medical advice about your medication. However, I will pass your question along to our staff for review.",
+      "handoffAction": {
+        "operation": "create",
+        "type": "clinical_question",
+        "details": {
+          "reason": "Blood pressure readings around 150/95",
+          "provider": "Dr. Priya Lee",
+          "medication": "Lisinopril",
+          "dose": "10 mg",
+          "frequency": "once daily",
+          "question": "Should I take two pills?",
+          "readings": "150/95"
+        }
+      }
+    }
+  },
+  {
+    "name": "Scripted dosing in spoken words remains clinical review",
+    "run": 1,
+    "pass": false,
+    "result": {
+      "mode": "emergency",
+      "reply": "If you think you are having a medical emergency, call 911 or go to the nearest emergency room now. This voice service is not monitored continuously and cannot help in an emergency.",
+      "handoffAction": {
+        "operation": "create",
+        "type": "emergency",
+        "details": {
+          "message": "My blood pressure is one fifty over ninety five should I take two pills"
+        }
+      }
+    }
+  },
+  {
+    "name": "Scripted dosing in spoken words remains clinical review",
+    "run": 2,
+    "pass": false,
+    "result": {
+      "mode": "emergency",
+      "reply": "If you think you are having a medical emergency, call 911 or go to the nearest emergency room now. This voice service is not monitored continuously and cannot help in an emergency.",
+      "handoffAction": {
+        "operation": "create",
+        "type": "emergency",
+        "details": {
+          "message": "My blood pressure is one fifty over ninety five should I take two pills"
+        }
+      }
+    }
+  },
+  {
+    "name": "Scripted dosing in spoken words remains clinical review",
+    "run": 3,
+    "pass": false,
+    "result": {
+      "mode": "emergency",
+      "reply": "If you think you are having a medical emergency, call 911 or go to the nearest emergency room now. This voice service is not monitored continuously and cannot help in an emergency.",
+      "handoffAction": {
+        "operation": "create",
+        "type": "emergency",
+        "details": {
+          "message": "My blood pressure is one fifty over ninety five should I take two pills"
+        }
+      }
+    }
+  }
+]

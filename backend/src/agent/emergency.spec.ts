@@ -17,6 +17,19 @@ describe('isEmergency', () => {
     expect(isEmergency(text)).toBe(true);
   });
 
+  // Regression cases for paraphrases of the step 11 scripted message that
+  // the original pattern list missed (reordered "chest pain", "numb" swapped
+  // for "tingling") — a purely literal keyword gate only ever covers the
+  // phrasings someone thought to write down.
+  it.each([
+    'I have pain in my chest and my left arm is tingling',
+    'there is crushing pressure in my chest',
+    "I can't feel my arm and my face feels weak on one side",
+    'I feel weakness on my left side and my speech is slurred',
+  ])('flags the paraphrase "%s"', (text) => {
+    expect(isEmergency(text)).toBe(true);
+  });
+
   it.each([
     'what time do you close today?',
     'can I get a refill on my BP med',

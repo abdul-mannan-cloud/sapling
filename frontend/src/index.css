@@ -985,6 +985,19 @@ button.small:hover {
   color: var(--on-dark);
 }
 
+/* same QuickActions component, reused inline under an unmatched agent
+   reply instead of the composer — strip the composer's panel chrome
+   (padding + paper background) so it reads as part of the bubble, not a
+   second floating bar */
+.inline-suggestions {
+  margin-top: 8px;
+}
+
+.inline-suggestions .quick-actions {
+  padding: 0;
+  background: transparent;
+}
+
 /* record panel (right rail, both roles) */
 
 .record-panel {
@@ -2247,3 +2260,17 @@ button.small:hover {
 .offline-toggle.dark .offline-toggle-hint {
   color: var(--on-dark-muted);
 }
+
+/* Patient appointments and refill requests */
+.request-content { padding: 24px; overflow-y: auto; }
+.request-content > p { color: var(--text-muted, #666); line-height: 1.6; }
+.request-tabs { display: flex; flex-wrap: wrap; gap: 10px; margin: 16px 0; }
+.request-card { padding: 22px; margin: 18px 0; border: 1px solid #deded8; border-radius: 16px; background: #fff; }
+.request-card-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.request-card h3 { margin: 0; font-size: 17px; }
+.request-card dl > div { display: grid; grid-template-columns: 120px 1fr; gap: 12px; margin: 10px 0; }
+.request-card dt { color: #777; text-transform: capitalize; }
+.request-card dd { margin: 0; overflow-wrap: anywhere; }
+.request-card small { color: #777; }
+.request-field { display: grid; gap: 6px; margin: 14px 0; }
+.request-field input, .request-field select { padding: 10px; border: 1px solid #d0d0c8; border-radius: 8px; font: inherit; width: 100%; box-sizing: border-box; }

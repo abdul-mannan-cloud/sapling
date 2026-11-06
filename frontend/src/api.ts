@@ -51,6 +51,9 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 export const api = {
+  myRequests: () => request<HandoffRecord[]>('/my-requests'),
+  editMyRequest: (id: string, details: Record<string, string>) => request<HandoffRecord>(`/my-requests/${id}`, { method: 'PATCH', body: JSON.stringify(details) }),
+  cancelMyRequest: (id: string) => request<HandoffRecord>(`/my-requests/${id}`, { method: 'DELETE' }),
   login: (username: string, password: string) =>
     request<{ token: string; role: Role; username: string; patientId?: string }>('/auth/login', {
       method: 'POST',

@@ -1,0 +1,8 @@
+{
+  "pass": true,
+  "messagesBefore": 10,
+  "messagesAfter": 10,
+  "savedRequestsAfterRestart": 2,
+  "tokenStillValid": true,
+  "database": "/var/folders/w8/qx8gm1nn0kg9zlq0gw7kyf2w0000gn/T/sapling-audit-sTcFng/audit.db"
+}

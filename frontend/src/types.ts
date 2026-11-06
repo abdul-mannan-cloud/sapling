@@ -25,6 +25,8 @@ export interface ThreadMessage {
   sender: 'clinic' | 'patient' | 'agent';
   body: string;
   createdAt: string;
+  /** Live-broadcast only (never present on messages loaded from history) — the agent couldn't match this one to anything specific, so show the same quick-action buttons as the composer right under it. */
+  suggestActions?: boolean;
 }
 
 export type HandoffType = 'appointment_request' | 'refill' | 'clinical_question' | 'billing' | 'other' | 'emergency';

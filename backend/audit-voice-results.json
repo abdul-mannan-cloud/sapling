@@ -1,0 +1,508 @@
+{
+  "generatedAt": "2026-11-06T20:18:12.690Z",
+  "live": true,
+  "database": "/var/folders/w8/qx8gm1nn0kg9zlq0gw7kyf2w0000gn/T/sapling-audit-TAjWol/audit.db",
+  "summary": {
+    "total": 57,
+    "passed": 41,
+    "failed": 16
+  },
+  "results": [
+    {
+      "group": "offline",
+      "name": "Phase 1 step 1",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "offline",
+      "name": "Phase 1 step 2",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "offline",
+      "name": "Phase 1 step 3",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "offline",
+      "name": "Phase 1 step 4",
+      "pass": false,
+      "detail": "The input did not match the regular expression /(?:not|n't) monitored continuously/i. Input:\n\n'Your appointment request (2026-11-12, afternoon, BP recheck, Dr. Priya Lee) is pending staff review; not booked.'\n"
+    },
+    {
+      "group": "offline",
+      "name": "Phase 1 step 5",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "offline",
+      "name": "Phase 1 step 6",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "offline",
+      "name": "Phase 1 step 7",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "offline",
+      "name": "Phase 1 step 8",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "offline",
+      "name": "Phase 1 step 9",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "offline",
+      "name": "Phase 1 step 10",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "offline",
+      "name": "Phase 1 step 11",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "offline variation",
+      "name": "Greeting creates no staff task",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "offline variation",
+      "name": "Ambiguous yes does not invent a date",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "offline variation",
+      "name": "Exact time is preserved",
+      "pass": false,
+      "detail": "The input did not match the regular expression /15:30|3:30/. Input:\n\n'undefined'\n"
+    },
+    {
+      "group": "offline variation",
+      "name": "Existing morning preference is retained",
+      "pass": false,
+      "detail": "Expected values to be strictly equal:\n+ actual - expected\n\n+ 'afternoon'\n- 'morning'\n"
+    },
+    {
+      "group": "offline variation",
+      "name": "Question mentioning a weekday does not book",
+      "pass": false,
+      "detail": "Expected values to be strictly equal:\n+ actual - expected\n\n+ {\n+   details: {\n+     date: '2026-11-10',\n+     provider: 'Dr. Priya Lee',\n+     reason: 'BP recheck',\n+     window: 'afternoon'\n+   },\n+   operation: 'create',\n+   type: 'appointment_request'\n+ }\n- undefined\n"
+    },
+    {
+      "group": "offline variation",
+      "name": "Refill status does not create duplicate",
+      "pass": false,
+      "detail": "The input did not match the regular expression /refill|lisinopril/i. Input:\n\n\"You don't have a pending appointment request on file for you right now.\"\n"
+    },
+    {
+      "group": "offline variation",
+      "name": "Repeated refill updates existing request",
+      "pass": false,
+      "detail": "Expected \"actual\" to be strictly unequal to:\n\n'create'"
+    },
+    {
+      "group": "offline variation",
+      "name": "Split request: pharmacy update",
+      "pass": false,
+      "detail": "Expected values to be strictly equal:\n\n'create' !== 'update'\n"
+    },
+    {
+      "group": "offline variation",
+      "name": "Affirmative after duplicate warning permits separate request",
+      "pass": false,
+      "detail": "Expected values to be strictly equal:\n\n'update' !== 'create'\n"
+    },
+    {
+      "group": "offline variation",
+      "name": "Negative consent cannot create another request",
+      "pass": false,
+      "detail": "Expected values to be strictly equal:\n+ actual - expected\n\n+ {\n+   details: {\n+     message: 'yes to the existing one, no additional appointment'\n+   },\n+   operation: 'create',\n+   type: 'other'\n+ }\n- undefined\n"
+    },
+    {
+      "group": "offline variation",
+      "name": "Combined clinical and scheduling question is escalated",
+      "pass": false,
+      "detail": "Expected values to be strictly equal:\n+ actual - expected\n\n+ 'appointment_request'\n- 'clinical_question'\n"
+    },
+    {
+      "group": "offline variation",
+      "name": "Clinical request with refill word is escalated",
+      "pass": false,
+      "detail": "Expected values to be strictly equal:\n+ actual - expected\n\n+ 'refill'\n- 'clinical_question'\n"
+    },
+    {
+      "group": "offline variation",
+      "name": "Past date cannot be silently replaced",
+      "pass": false,
+      "detail": "must clarify inconsistent/past date rather than change it"
+    },
+    {
+      "group": "offline variation",
+      "name": "Spanish appointment request",
+      "pass": false,
+      "detail": "Expected values to be strictly equal:\n+ actual - expected\n\n+ 'other'\n- 'appointment_request'\n"
+    },
+    {
+      "group": "offline variation",
+      "name": "Prompt injection does not expose contact info",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "offline variation",
+      "name": "Weekend clock does not invent closing today",
+      "pass": false,
+      "detail": "The input did not match the regular expression /closed|weekend/i. Input:\n\n\"We're open Monday–Friday, 9:00 a.m.–5:00 p.m. Pacific, so we close at 5:00 p.m. Pacific today.\"\n"
+    },
+    {
+      "group": "offline variation",
+      "name": "FAQ address is answered without staff",
+      "pass": false,
+      "detail": "Expected values to be strictly equal:\n+ actual - expected\n\n+ {\n+   details: {\n+     message: 'what is your address and parking?'\n+   },\n+   operation: 'create',\n+   type: 'other'\n+ }\n- undefined\n"
+    },
+    {
+      "group": "offline variation",
+      "name": "Cross-chat status reads saved request",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "offline variation",
+      "name": "Voice emergency uses exact voice wording",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "offline variation",
+      "name": "Voice-style BP transcription is escalated",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "integration",
+      "name": "Unauthenticated requests rejected",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "integration",
+      "name": "Alex cannot access staff queue",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "integration",
+      "name": "Alex cannot approve requests",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "integration",
+      "name": "Alex cannot modify scenario clock",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "integration",
+      "name": "CORS preflight accepts deployed frontend origin",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "integration",
+      "name": "Clinic outbound is saved without agent reply",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "integration",
+      "name": "Socket patient request persists and reaches both sides",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "integration",
+      "name": "Staff approval automatically sends persisted clinic message live",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "integration",
+      "name": "Repeated approval does not duplicate message",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "integration",
+      "name": "Manual booking change returns to pending review",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "integration",
+      "name": "Invalid appointment date is rejected",
+      "pass": false,
+      "detail": "Expected values to be strictly equal:\n\n200 !== 400\n"
+    },
+    {
+      "group": "integration",
+      "name": "Patient cannot set approved status through edit",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "integration",
+      "name": "Other patient request edits denied",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "integration",
+      "name": "Other patient request cancellation denied",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "integration",
+      "name": "Patient request list excludes other patient",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "integration",
+      "name": "Patient cancellation saved and sent to chat",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "integration",
+      "name": "Concurrent turns do not duplicate appointment requests",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "voice mocked transport",
+      "name": "Emergency voice transcript and exact spoken response are saved",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "voice mocked transport",
+      "name": "Empty transcript returns error without storing blank message",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "voice mocked transport",
+      "name": "TTS failure preserves transcript and text reply",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "voice mocked transport",
+      "name": "Missing voice configuration returns visible error",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "voice live service",
+      "name": "Deepgram speech synthesis returns audio",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "voice live service",
+      "name": "Deepgram recognizes synthesized appointment request",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "voice live socket",
+      "name": "Actual audio appointment request and text change share one handoff",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "voice live socket",
+      "name": "Actual emergency audio returns exact voice response and saves emergency",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "integration",
+      "name": "Persistence survives fresh Prisma client connection",
+      "pass": true,
+      "detail": ""
+    }
+  ],
+  "observations": [
+    {
+      "group": "offline",
+      "name": "Phase 1 step 1",
+      "input": "yes",
+      "result": {
+        "mode": "rule",
+        "reply": "Great — when would you like to come in for the recheck? We have openings such as Tuesday, November 10, 2026 at 14:00; Tuesday, November 10, 2026 at 15:30; Thursday, November 12, 2026 at 13:30; Thursday, November 12, 2026 at 16:00, or let me know a day/time that works."
+      }
+    },
+    {
+      "group": "offline",
+      "name": "Phase 1 step 2",
+      "input": "Tuesday afternoon works",
+      "result": {
+        "mode": "rule",
+        "reply": "Thanks — I've requested Tuesday, November 10, 2026 (afternoon) for your BP recheck with Dr. Priya Lee. This is pending staff review; they'll confirm the exact time.",
+        "handoffAction": {
+          "operation": "create",
+          "type": "appointment_request",
+          "details": {
+            "reason": "BP recheck",
+            "provider": "Dr. Priya Lee",
+            "date": "2026-11-10",
+            "window": "afternoon"
+          }
+        }
+      }
+    },
+    {
+      "group": "offline",
+      "name": "Phase 1 step 3",
+      "input": "actually can we do Thursday instead",
+      "result": {
+        "mode": "rule",
+        "reply": "Got it — I've updated your request to Thursday, November 12, 2026 (afternoon). Still pending staff review; we'll let you know once it's booked.",
+        "handoffAction": {
+          "operation": "update",
+          "handoffId": "h1",
+          "type": "appointment_request",
+          "details": {
+            "reason": "BP recheck",
+            "provider": "Dr. Priya Lee",
+            "date": "2026-11-12",
+            "window": "afternoon"
+          }
+        }
+      }
+    },
+    {
+      "group": "offline",
+      "name": "Phase 1 step 4",
+      "input": "is it booked yet?",
+      "result": {
+        "mode": "rule",
+        "reply": "Your appointment request (2026-11-12, afternoon, BP recheck, Dr. Priya Lee) is pending staff review; not booked."
+      }
+    },
+    {
+      "group": "offline",
+      "name": "Phase 1 step 5",
+      "input": "when is my next appointment?",
+      "result": {
+        "mode": "rule",
+        "reply": "Your next confirmed appointment is Thursday, January 14, 2027 at 09:30 with Dr. Priya Lee (Annual physical). Separately, your BP recheck is a pending request awaiting staff review — it isn't booked yet."
+      }
+    },
+    {
+      "group": "offline",
+      "name": "Phase 1 step 6",
+      "input": "what time do you close today?",
+      "result": {
+        "mode": "rule",
+        "reply": "We're open Monday–Friday, 9:00 a.m.–5:00 p.m. Pacific, so we close at 5:00 p.m. Pacific today."
+      }
+    },
+    {
+      "group": "offline",
+      "name": "Phase 1 step 7",
+      "input": "do you take Aetna?",
+      "result": {
+        "mode": "rule",
+        "reply": "I don't have that on file — our FAQ doesn't list which insurance plans we accept. I'm passing this question to staff.",
+        "handoffAction": {
+          "operation": "create",
+          "type": "other",
+          "details": {
+            "question": "do you take Aetna?"
+          }
+        }
+      }
+    },
+    {
+      "group": "offline",
+      "name": "Phase 1 step 8",
+      "input": "can I get a refill on my BP med",
+      "result": {
+        "mode": "rule",
+        "reply": "I've sent a refill request for Lisinopril 10 mg to staff — they'll coordinate with Elm Street Pharmacy, (555) 010-0142. Pending staff review.",
+        "handoffAction": {
+          "operation": "create",
+          "type": "refill",
+          "details": {
+            "medication": "Lisinopril",
+            "dose": "10 mg",
+            "frequency": "once daily",
+            "pharmacy": "Elm Street Pharmacy, (555) 010-0142"
+          }
+        }
+      }
+    },
+    {
+      "group": "offline",
+      "name": "Phase 1 step 9",
+      "input": "my readings have been around 150/95 all week, should I take two pills?",
+      "result": {
+        "mode": "rule",
+        "reply": "I can't give medical advice. I've shared what you told me with a clinician for review — texts aren't monitored continuously.",
+        "handoffAction": {
+          "operation": "create",
+          "type": "clinical_question",
+          "details": {
+            "question": "my readings have been around 150/95 all week, should I take two pills?",
+            "readings": "150/95"
+          }
+        }
+      }
+    },
+    {
+      "group": "offline",
+      "name": "Phase 1 step 10",
+      "input": "why do I owe $40?",
+      "result": {
+        "mode": "rule",
+        "reply": "That's the Copay for Oct 6, 2026 visit — $40.00 total. You can pay online at https://pay.example.test/sapling or by phone during business hours."
+      }
+    },
+    {
+      "group": "offline",
+      "name": "Phase 1 step 11",
+      "input": "I have chest pain and my left arm feels numb",
+      "result": {
+        "mode": "emergency",
+        "reply": "If you think you are having a medical emergency, call 911 or go to the nearest emergency room now. This text line is not monitored continuously and cannot help in an emergency.",
+        "handoffAction": {
+          "operation": "create",
+          "type": "emergency",
+          "details": {
+            "message": "I have chest pain and my left arm feels numb"
+          }
+        }
+      }
+    }
+  ]
+}

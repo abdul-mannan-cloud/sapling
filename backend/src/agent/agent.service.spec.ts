@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { AgentService } from './agent.service.js';
+import { AgentService, protectPendingAppointments } from './agent.service.js';
 import type { RuleAgentService } from './rule-agent.service.js';
 import type { LlmAgentService } from './llm-agent.service.js';
 import type { OfflineModeService } from '../agent-mode/offline-mode.service.js';
@@ -62,5 +62,31 @@ describe('AgentService — offline mode override', () => {
     expect(offlineMode.isForced).not.toHaveBeenCalled();
     expect(ruleAgent.run).not.toHaveBeenCalled();
     expect(llmAgent.run).not.toHaveBeenCalled();
+  });
+});
+
+describe('pending appointment protection', () => {
+  const pending = { id: 'request1', patientId: 'pt_001', conversationId: 'other-chat', type: 'appointment_request' as const, status: 'pending_staff' as const, details: { date: '2026-11-10', window: 'afternoon' }, messageIds: [], createdAt: '', updatedAt: '' };
+  const proposal = { mode: 'llm' as const, reply: 'Saved another request', handoffAction: { operation: 'create' as const, type: 'appointment_request' as const, details: { date: '2026-11-12' } } };
+  it('blocks an additional request and asks for confirmation across chats', () => {
+    const ctx = { ...buildContext('book Thursday'), handoffs: [pending] };
+    const result = protectPendingAppointments(ctx, proposal);
+    expect(result.handoffAction).toBeUndefined();
+    expect(result.reply).toContain('1 pending');
+    expect(result.reply).toContain('2026-11-10');
+  });
+  it('allows an additional request after explicit confirmation', () => {
+    const ctx = { ...buildContext('yes, Thursday afternoon'), handoffs: [pending] };
+    ctx.history = [{ id: 'a', sender: 'agent', body: 'Do you still want an additional appointment request?', createdAt: '' }];
+    expect(protectPendingAppointments(ctx, proposal)).toBe(proposal);
+  });
+  it('does not treat a refusal as consent', () => {
+    const ctx = { ...buildContext('no'), handoffs: [pending] };
+    expect(protectPendingAppointments(ctx, proposal).handoffAction).toBeUndefined();
+  });
+  it('does not treat a "yes" substring inside an overall refusal as consent', () => {
+    const ctx = { ...buildContext('yes to the existing one, no additional appointment'), handoffs: [pending] };
+    ctx.history = [{ id: 'a', sender: 'agent', body: 'Do you still want an additional appointment request?', createdAt: '' }];
+    expect(protectPendingAppointments(ctx, proposal).handoffAction).toBeUndefined();
   });
 });

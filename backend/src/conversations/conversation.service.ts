@@ -180,10 +180,11 @@ export class ConversationService {
     const [nowIso, nowDescription, handoffRecords] = await Promise.all([
       this.clock.getNowIso(),
       this.clock.describeNow(),
-      this.handoffs.listForConversation(convo.id),
+      this.handoffs.list(convo.patientId),
     ]);
 
     const result = await this.agent.handle({
+      conversationId: convo.id,
       nowIso,
       nowDescription,
       patient: this.patientService.getRecord(),
@@ -198,7 +199,10 @@ export class ConversationService {
     let handoff: HandoffRecord | undefined;
     if (result.handoffAction) {
       const { operation, handoffId, type, details } = result.handoffAction;
-      const targetExists = handoffId && handoffRecords.some((h) => h.id === handoffId);
+      const targetExists = handoffId && handoffRecords.some((h) => h.id === handoffId && h.status === 'pending_staff' && h.conversationId === convo.id);
+      if (operation === 'update' && !targetExists) {
+        throw new Error('Only pending requests in this conversation can be updated');
+      }
       if (operation === 'update' && targetExists) {
         handoff = await this.handoffs.update(handoffId!, {
           detailsPatch: details,
@@ -220,6 +224,13 @@ export class ConversationService {
     });
     await this.touchConversation(convo.id, convo.patientId);
 
-    return { patientMessage, agentMessage: toThreadMessage(agentRow), handoff, mode: result.mode };
+    // A type:'other' handoff is the agent's "I don't know what you meant"
+    // case, whether that came from the rule matcher missing a phrasing or
+    // the LLM genuinely not finding a match — either way, pairing it with
+    // the same quick-action buttons the composer already offers turns a
+    // dead end into a way forward. Live-only (see ThreadMessage.suggestActions).
+    const agentMessage = { ...toThreadMessage(agentRow), suggestActions: result.handoffAction?.type === 'other' };
+
+    return { patientMessage, agentMessage, handoff, mode: result.mode };
   }
 }

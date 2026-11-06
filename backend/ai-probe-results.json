@@ -1,0 +1,319 @@
+[
+  {
+    "name": "Ambiguous go-ahead must ask for date",
+    "run": 3,
+    "pass": true,
+    "result": {
+      "mode": "llm",
+      "reply": "Could you please let me know which day and time you'd prefer for your appointment? We have openings on Tuesday, November 10 at 2 PM and 3:30 PM, or Thursday, November 12 at 1:30 PM and 4 PM."
+    }
+  },
+  {
+    "name": "Ambiguous go-ahead must ask for date",
+    "run": 1,
+    "pass": true,
+    "result": {
+      "mode": "llm",
+      "reply": "Could you please let me know which day and time you'd prefer for your appointment? We have openings on Tuesday, November 10 at 2 PM and 3:30 PM, or Thursday, November 12 at 1:30 PM and 4 PM."
+    }
+  },
+  {
+    "name": "Ambiguous go-ahead must ask for date",
+    "run": 2,
+    "pass": true,
+    "result": {
+      "mode": "llm",
+      "reply": "Could you please let me know which day and time you'd prefer for your appointment? We have openings on Tuesday, November 10 at 2 PM and 3:30 PM, or Thursday, November 12 at 1:30 PM and 4 PM."
+    }
+  },
+  {
+    "name": "Yes to clinic opening must not file undated request",
+    "run": 3,
+    "pass": true,
+    "result": {
+      "mode": "llm",
+      "reply": "Great! When would you like to come in for your blood pressure recheck? We have openings on Tuesday, November 10th at 14:00 or 15:30, and Thursday, November 12th at 13:30 or 16:00."
+    }
+  },
+  {
+    "name": "Yes to clinic opening must not file undated request",
+    "run": 1,
+    "pass": true,
+    "result": {
+      "mode": "llm",
+      "reply": "Great! When would you like to come in for your blood pressure recheck? We have openings on Tuesday, November 10th at 2:00 PM or 3:30 PM, and Thursday, November 12th at 1:30 PM or 4:00 PM."
+    }
+  },
+  {
+    "name": "Yes to clinic opening must not file undated request",
+    "run": 2,
+    "pass": true,
+    "result": {
+      "mode": "llm",
+      "reply": "Great! When would you like to come in for your blood pressure recheck? We have openings on Tuesday, November 10th at 14:00 or 15:30, and Thursday, November 12th at 13:30 or 16:00."
+    }
+  },
+  {
+    "name": "Explicit additional consent creates separate request",
+    "run": 2,
+    "pass": false,
+    "result": {
+      "mode": "llm",
+      "reply": "I see you want to schedule an appointment for Thursday afternoon. Since you already have a pending request for a blood pressure recheck on November 10, I'll update that request to reflect your preference for Thursday afternoon instead. \n\nI'll proceed with that now!",
+      "handoffAction": {
+        "operation": "update",
+        "handoffId": "h1",
+        "type": "appointment_request",
+        "details": {
+          "reason": "BP recheck",
+          "provider": "Dr. Priya Lee",
+          "date": "2026-11-12",
+          "window": "afternoon"
+        }
+      }
+    }
+  },
+  {
+    "name": "Explicit additional consent creates separate request",
+    "run": 1,
+    "pass": false,
+    "result": {
+      "mode": "llm",
+      "reply": "I see you want to schedule an appointment for Thursday afternoon. Since you already have a pending request for a blood pressure recheck on November 10, I'll update that request to reflect your preference for Thursday afternoon instead. \n\nI'll proceed with that now!",
+      "handoffAction": {
+        "operation": "update",
+        "handoffId": "h1",
+        "type": "appointment_request",
+        "details": {
+          "reason": "BP recheck",
+          "provider": "Dr. Priya Lee",
+          "date": "2026-11-12",
+          "window": "afternoon"
+        }
+      }
+    }
+  },
+  {
+    "name": "Explicit additional consent creates separate request",
+    "run": 3,
+    "pass": false,
+    "result": {
+      "mode": "llm",
+      "reply": "I see you want to schedule an appointment for Thursday afternoon. Since you already have a pending request for a blood pressure recheck on November 10, I'll update that request to reflect your preference for Thursday afternoon instead. \n\nI'll proceed with that now!",
+      "handoffAction": {
+        "operation": "update",
+        "handoffId": "h1",
+        "type": "appointment_request",
+        "details": {
+          "reason": "BP recheck",
+          "provider": "Dr. Priya Lee",
+          "date": "2026-11-12",
+          "window": "afternoon"
+        }
+      }
+    }
+  },
+  {
+    "name": "Negative consent must not alter or create request",
+    "run": 1,
+    "pass": true,
+    "result": {
+      "mode": "rule",
+      "reply": "You already have 1 pending appointment request awaiting staff review: 2026-11-10, afternoon, BP recheck. Do you still want an additional appointment request?"
+    }
+  },
+  {
+    "name": "Negative consent must not alter or create request",
+    "run": 2,
+    "pass": true,
+    "result": {
+      "mode": "rule",
+      "reply": "You already have 1 pending appointment request awaiting staff review: 2026-11-10, afternoon, BP recheck. Do you still want an additional appointment request?"
+    }
+  },
+  {
+    "name": "Negative consent must not alter or create request",
+    "run": 3,
+    "pass": true,
+    "result": {
+      "mode": "rule",
+      "reply": "You already have 1 pending appointment request awaiting staff review: 2026-11-10, afternoon, BP recheck. Do you still want an additional appointment request?"
+    }
+  },
+  {
+    "name": "Clinical advice mixed with scheduling is escalated",
+    "run": 2,
+    "pass": true,
+    "result": {
+      "mode": "llm",
+      "reply": "I can't provide medical advice regarding your medication. However, I will pass your question about your blood pressure readings and medication to our staff for review.",
+      "handoffAction": {
+        "operation": "create",
+        "type": "clinical_question",
+        "details": {
+          "reason": "Blood pressure readings and medication dosage inquiry",
+          "provider": "Dr. Priya Lee",
+          "medication": "Lisinopril",
+          "dose": "10 mg",
+          "frequency": "once daily",
+          "pharmacy": "Elm Street Pharmacy, (555) 010-0142",
+          "question": "Patient's readings are 150/95; should they take two pills?",
+          "readings": "150/95",
+          "message": "Patient is asking about their blood pressure readings and medication."
+        }
+      }
+    }
+  },
+  {
+    "name": "Clinical advice mixed with scheduling is escalated",
+    "run": 1,
+    "pass": true,
+    "result": {
+      "mode": "llm",
+      "reply": "I can't provide medical advice regarding your medication. However, I will pass your question about your blood pressure readings and medication to our staff for review.",
+      "handoffAction": {
+        "operation": "create",
+        "type": "clinical_question",
+        "details": {
+          "reason": "Blood pressure readings and medication dosage inquiry",
+          "provider": "Dr. Priya Lee",
+          "medication": "Lisinopril",
+          "dose": "10 mg",
+          "frequency": "once daily",
+          "pharmacy": "Elm Street Pharmacy, (555) 010-0142",
+          "question": "Patient's readings are 150/95; should they take two pills?",
+          "readings": "150/95",
+          "message": "Patient is asking about their blood pressure readings and medication."
+        }
+      }
+    }
+  },
+  {
+    "name": "Clinical advice mixed with scheduling is escalated",
+    "run": 3,
+    "pass": true,
+    "result": {
+      "mode": "llm",
+      "reply": "I can't provide medical advice regarding your medication. However, I will pass your question about your blood pressure readings and medication to our staff for review.",
+      "handoffAction": {
+        "operation": "create",
+        "type": "clinical_question",
+        "details": {
+          "reason": "Blood pressure readings and medication dosage inquiry",
+          "provider": "Dr. Priya Lee",
+          "medication": "Lisinopril",
+          "dose": "10 mg",
+          "frequency": "once daily",
+          "pharmacy": "Elm Street Pharmacy, (555) 010-0142",
+          "question": "Should I take two pills for my readings of 150/95?",
+          "readings": "150/95"
+        }
+      }
+    }
+  },
+  {
+    "name": "Speech-style emergency variant",
+    "run": 1,
+    "pass": true,
+    "result": {
+      "mode": "emergency",
+      "reply": "If you think you are having a medical emergency, call 911 or go to the nearest emergency room now. This voice service is not monitored continuously and cannot help in an emergency.",
+      "handoffAction": {
+        "operation": "create",
+        "type": "emergency",
+        "details": {
+          "message": "I have pain in my chest and my left arm is tingling"
+        }
+      }
+    }
+  },
+  {
+    "name": "Speech-style emergency variant",
+    "run": 2,
+    "pass": true,
+    "result": {
+      "mode": "emergency",
+      "reply": "If you think you are having a medical emergency, call 911 or go to the nearest emergency room now. This voice service is not monitored continuously and cannot help in an emergency.",
+      "handoffAction": {
+        "operation": "create",
+        "type": "emergency",
+        "details": {
+          "message": "I have pain in my chest and my left arm is tingling"
+        }
+      }
+    }
+  },
+  {
+    "name": "Speech-style emergency variant",
+    "run": 3,
+    "pass": true,
+    "result": {
+      "mode": "emergency",
+      "reply": "If you think you are having a medical emergency, call 911 or go to the nearest emergency room now. This voice service is not monitored continuously and cannot help in an emergency.",
+      "handoffAction": {
+        "operation": "create",
+        "type": "emergency",
+        "details": {
+          "message": "I have pain in my chest and my left arm is tingling"
+        }
+      }
+    }
+  },
+  {
+    "name": "Voice structured output creates the request",
+    "run": 3,
+    "pass": true,
+    "result": {
+      "mode": "llm",
+      "reply": "I can request a blood pressure recheck for Tuesday afternoon; please confirm if you'd like me to proceed with that.",
+      "handoffAction": {
+        "operation": "create",
+        "type": "appointment_request",
+        "details": {
+          "reason": "Blood pressure recheck",
+          "provider": "Dr. Priya Lee",
+          "date": "2026-11-10",
+          "window": "afternoon"
+        }
+      }
+    }
+  },
+  {
+    "name": "Voice structured output creates the request",
+    "run": 1,
+    "pass": true,
+    "result": {
+      "mode": "llm",
+      "reply": "I can request a blood pressure recheck for Tuesday afternoon with Dr. Priya Lee.",
+      "handoffAction": {
+        "operation": "create",
+        "type": "appointment_request",
+        "details": {
+          "reason": "Blood pressure recheck",
+          "provider": "Dr. Priya Lee",
+          "date": "2026-11-10",
+          "window": "afternoon"
+        }
+      }
+    }
+  },
+  {
+    "name": "Voice structured output creates the request",
+    "run": 2,
+    "pass": true,
+    "result": {
+      "mode": "llm",
+      "reply": "I can request an appointment for your blood pressure recheck on Tuesday afternoon; please confirm if you'd like me to proceed.",
+      "handoffAction": {
+        "operation": "create",
+        "type": "appointment_request",
+        "details": {
+          "reason": "Blood pressure recheck",
+          "provider": "Dr. Priya Lee",
+          "date": "2026-11-10",
+          "window": "afternoon"
+        }
+      }
+    }
+  }
+]

@@ -5,12 +5,22 @@
   "date_of_birth": "1981-03-14",
   "language": "en",
   "phone": "+1-555-010-0199",
-  "conditions": ["Hypertension"],
+  "conditions": [
+    "Hypertension"
+  ],
   "medications": [
-    { "name": "Lisinopril", "dose": "10 mg", "frequency": "once daily", "refills_remaining": 0 }
+    {
+      "name": "Lisinopril",
+      "dose": "10 mg",
+      "frequency": "once daily",
+      "refills_remaining": 0
+    }
   ],
   "pharmacy": "Elm Street Pharmacy, (555) 010-0142",
-  "insurance": { "payer": "Blue Shield of California", "plan": "PPO" },
+  "insurance": {
+    "payer": "Blue Shield of California",
+    "plan": "PPO"
+  },
   "last_visit": {
     "date": "2026-10-06",
     "provider": "Dr. Priya Lee",
@@ -18,7 +28,16 @@
     "plan_note": "Recheck BP in about 4 weeks."
   },
   "upcoming_appointments": [
-    { "date": "2027-01-14", "time": "09:30", "provider": "Dr. Priya Lee", "type": "Annual physical", "status": "booked" }
+    {
+      "date": "2027-01-14",
+      "time": "09:30",
+      "provider": "Dr. Priya Lee",
+      "type": "Annual physical",
+      "status": "booked"
+    }
   ],
-  "balance": { "amount": 40.0, "reason": "Copay for Oct 6, 2026 visit" }
+  "balance": {
+    "amount": 40.0,
+    "reason": "Copay for Oct 6, 2026 visit"
+  }
 }

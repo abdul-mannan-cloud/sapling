@@ -5,7 +5,7 @@ import { FaqService } from '../faq/faq.service.js';
 import type { AgentContext } from './types.js';
 import type { HandoffRecord } from '../handoffs/handoff.types.js';
 
-const patient = new PatientService().getRecord();
+const patient = { ...new PatientService().getRecord(), upcoming_appointments: [{ date: '2027-01-14', time: '09:30', provider: 'Dr. Priya Lee', type: 'Annual physical', status: 'confirmed' }] };
 const faq = new FaqService();
 const agent = new RuleAgentService();
 

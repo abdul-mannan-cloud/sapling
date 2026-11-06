@@ -142,7 +142,7 @@ export function AllHandoffsView({ onOpenPatient }: { onOpenPatient: (patientId: 
                       {pending && (
                         <div className="actions" onClick={(e) => e.stopPropagation()}>
                           <button className="btn dark small" onClick={() => setStatus(h.id, 'resolved')}>
-                            Mark resolved
+                            {h.type === 'appointment_request' ? 'Approve appointment' : 'Mark resolved'}
                           </button>
                           <button className="btn ghost small" onClick={() => setStatus(h.id, 'cancelled')}>
                             Cancel

@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import type { AgentContext, AgentResult } from './types.js';
-import { extractWeekday, extractWindow, formatDateLong, weekdayOf, windowFromTime } from './date-utils.js';
+import { extractWeekday, extractWindow, formatDateLong, weekdayOf, weekdayOfInstant, windowFromTime } from './date-utils.js';
 
 /**
  * Deterministic fallback agent used when no OPENAI_API_KEY is configured.
@@ -19,6 +19,55 @@ export class RuleAgentService {
       (h) => h.type === 'appointment_request' && h.status === 'pending_staff',
     );
 
+    // Step 9 — dosing/clinical-safety questions take precedence over every
+    // other branch. A message that bundles a scheduling or refill ask with
+    // a clinical question (e.g. "Tuesday works; my readings are 150/95,
+    // should I take two pills?") must never let the clinical half get
+    // silently swallowed by a keyword match further down — the "never give
+    // medical advice, always escalate" rule can't depend on which intent
+    // happens to appear first in the sentence.
+    if (
+      /\d{2,3}\s*\/\s*\d{2,3}/.test(lower) ||
+      /(take (two|2|another) pill|should i take|double.{0,20}(dose|med|medication|pill))/.test(lower)
+    ) {
+      const readingsMatch = text.match(/\d{2,3}\s*\/\s*\d{2,3}/);
+      return {
+        mode: 'rule',
+        reply: `I can't give medical advice. I've shared what you told me with a clinician for review — texts aren't monitored continuously.`,
+        handoffAction: {
+          operation: 'create',
+          type: 'clinical_question',
+          details: { question: text, readings: readingsMatch?.[0] ?? null },
+        },
+      };
+    }
+
+    // Step 6 — hours/open-day. Checked before weekday extraction so "are
+    // you open Tuesday?" answers the FAQ question instead of being
+    // swallowed as a scheduling intent just because it names a weekday.
+    // Respects the scenario clock's actual day, not a hardcoded weekday.
+    if (/\b(close|closing|hours|open)\b/.test(lower)) {
+      const today = weekdayOfInstant(ctx.nowIso);
+      const isWeekend = today === 'saturday' || today === 'sunday';
+      return {
+        mode: 'rule',
+        reply: isWeekend
+          ? `We're closed today — open Monday–Friday, 9:00 a.m.–5:00 p.m. Pacific.`
+          : `We're open Monday–Friday, 9:00 a.m.–5:00 p.m. Pacific, so we close at 5:00 p.m. Pacific today.`,
+      };
+    }
+
+    // Covered directly by the FAQ, so this shouldn't need staff review.
+    // Anchored to asking about the CLINIC's location, not e.g. "update my
+    // mailing address" (a contact-info change, which falls through to the
+    // catch-all as it should — this agent never edits the patient record).
+    if (/\b(where are you|your address|clinic address|located|parking)\b/.test(lower)) {
+      return {
+        mode: 'rule',
+        reply: `We're at 1200 Example Ave, Suite 300, Springfield, CA 90000 — free parking in the garage behind the building.`,
+      };
+    }
+
     // Steps 2 & 3: a weekday mention resolves against the real open slots,
     // not generic calendar math, so "Thursday" lands on the Nov 12 slot
     // rather than the nearer-but-not-offered Nov 5.
@@ -29,6 +78,9 @@ export class RuleAgentService {
         const window = extractWindow(lower) ?? windowFromTime(slot.start);
         const details = { reason: 'BP recheck', provider: slot.provider, date: slot.date, window };
         const dateText = formatDateLong(slot.date);
+        if (existingApptReq && ctx.conversationId && existingApptReq.conversationId !== ctx.conversationId) {
+          return { mode: 'rule', reply: `You already have a pending appointment request for ${String(existingApptReq.details.date ?? 'an unspecified date')}. Please open its original chat to change it. If you want an additional appointment, please say so.` };
+        }
         if (existingApptReq) {
           return {
             mode: 'rule',
@@ -65,13 +117,25 @@ export class RuleAgentService {
       };
     }
 
-    // Step 4 — "is it booked/confirmed yet" and plain variants like "is it confirmed?".
-    if (/\b(booked|confirm(ed)?)\b/.test(lower)) {
+    // Step 4 — status queries: "is it booked/confirmed/approved/pending yet", and synonyms.
+    // Excludes "refill" so "what is the status of my refill?" reaches the
+    // refill branch's own status check below instead of being answered as
+    // if it were asking about the appointment request.
+    if (/\b(status|pending|approved|booked|confirm(ed)?|finished|submitted|cancelled)\b/.test(lower) && !/refill/.test(lower)) {
       if (existingApptReq) {
         const d = existingApptReq.details as { date: string; window: string };
         return {
           mode: 'rule',
           reply: `Not yet — your request for ${formatDateLong(d.date)} (${d.window}) is still pending staff review, not booked. Texts aren't monitored continuously, so I can't give a timeline.`,
+        };
+      }
+      const resolved = ctx.handoffs.filter((h) => h.type === 'appointment_request' && h.status === 'resolved');
+      if (resolved.length) {
+        return {
+          mode: 'rule',
+          reply: resolved
+            .map((h) => `Staff approved your appointment request for ${[h.details.date, h.details.slot_start || h.details.window, h.details.provider].filter(Boolean).join(', ')}.`)
+            .join(' '),
         };
       }
       return { mode: 'rule', reply: `I don't have a pending appointment request on file for you right now.` };
@@ -86,15 +150,10 @@ export class RuleAgentService {
       if (existingApptReq) {
         reply += ` Separately, your BP recheck is a pending request awaiting staff review — it isn't booked yet.`;
       }
+      for (const request of ctx.handoffs.filter((h) => h.type === 'appointment_request' && h.status === 'resolved')) {
+        reply += ` Staff approved your appointment request for ${[request.details.date, request.details.slot_start || request.details.window, request.details.provider].filter(Boolean).join(', ')}.`;
+      }
       return { mode: 'rule', reply };
-    }
-
-    // Step 6
-    if (/\b(close|closing|hours|open)\b/.test(lower)) {
-      return {
-        mode: 'rule',
-        reply: `We're open Monday–Friday, 9:00 a.m.–5:00 p.m. Pacific, so we close at 5:00 p.m. Pacific today.`,
-      };
     }
 
     // Step 7
@@ -106,8 +165,24 @@ export class RuleAgentService {
       };
     }
 
-    // Step 8
+    // Step 8 — also answers "what is the status of my refill?" and avoids
+    // filing a second refill handoff when one is already pending (the same
+    // "update, don't duplicate" principle applied to appointment requests).
     if (/refill/.test(lower)) {
+      const existingRefill = ctx.handoffs.find((h) => h.type === 'refill' && h.status === 'pending_staff');
+      if (/\b(status|pending|approved|confirm(ed)?|finished|submitted|cancelled)\b/.test(lower)) {
+        if (existingRefill) {
+          return { mode: 'rule', reply: `Your refill request for ${existingRefill.details.medication} is still pending staff review.` };
+        }
+        const resolvedRefill = ctx.handoffs.find((h) => h.type === 'refill' && h.status === 'resolved');
+        if (resolvedRefill) {
+          return { mode: 'rule', reply: `Staff already handled your refill request for ${resolvedRefill.details.medication}.` };
+        }
+        return { mode: 'rule', reply: `You don't have a refill request on file right now.` };
+      }
+      if (existingRefill) {
+        return { mode: 'rule', reply: `You already have a refill request for ${existingRefill.details.medication} pending staff review — no need to send it again.` };
+      }
       const med = patient.medications[0];
       return {
         mode: 'rule',
@@ -116,20 +191,6 @@ export class RuleAgentService {
           operation: 'create',
           type: 'refill',
           details: { medication: med.name, dose: med.dose, frequency: med.frequency, pharmacy: patient.pharmacy },
-        },
-      };
-    }
-
-    // Step 9
-    if (/\d{2,3}\s*\/\s*\d{2,3}/.test(lower) || /(take (two|2|another) pill|should i take|double.*dose)/.test(lower)) {
-      const readingsMatch = text.match(/\d{2,3}\s*\/\s*\d{2,3}/);
-      return {
-        mode: 'rule',
-        reply: `I can't give medical advice. I've shared what you told me with a clinician for review — texts aren't monitored continuously.`,
-        handoffAction: {
-          operation: 'create',
-          type: 'clinical_question',
-          details: { question: text, readings: readingsMatch?.[0] ?? null },
         },
       };
     }
@@ -144,7 +205,7 @@ export class RuleAgentService {
 
     return {
       mode: 'rule',
-      reply: `Thanks for letting us know. I don't have enough information to answer that directly, so I've passed it to staff for review.`,
+      reply: `I'm not sure what you meant, so I've flagged this for staff to review. In the meantime, here's what I can help with directly:`,
       handoffAction: { operation: 'create', type: 'other', details: { message: text } },
     };
   }

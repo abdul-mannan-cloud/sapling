@@ -1,0 +1,528 @@
+{
+  "generatedAt": "2026-11-06T20:16:29.829Z",
+  "live": true,
+  "database": "/var/folders/w8/qx8gm1nn0kg9zlq0gw7kyf2w0000gn/T/sapling-audit-EZRXgn/audit.db",
+  "summary": {
+    "total": 86,
+    "passed": 60,
+    "failed": 26
+  },
+  "results": [
+    {
+      "group": "offline",
+      "name": "Phase 1 step 1",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "offline",
+      "name": "Phase 1 step 2",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "offline",
+      "name": "Phase 1 step 3",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "offline",
+      "name": "Phase 1 step 4",
+      "pass": false,
+      "detail": "The input did not match the regular expression /not monitored continuously/i. Input:\n\n'Your appointment request (2026-11-12, afternoon, BP recheck, Dr. Priya Lee) is pending staff review; not booked.'\n"
+    },
+    {
+      "group": "offline",
+      "name": "Phase 1 step 5",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "offline",
+      "name": "Phase 1 step 6",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "offline",
+      "name": "Phase 1 step 7",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "offline",
+      "name": "Phase 1 step 8",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "offline",
+      "name": "Phase 1 step 9",
+      "pass": false,
+      "detail": "The input did not match the regular expression /not monitored continuously/i. Input:\n\n\"I can't give medical advice. I've shared what you told me with a clinician for review — texts aren't monitored continuously.\"\n"
+    },
+    {
+      "group": "offline",
+      "name": "Phase 1 step 10",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "offline",
+      "name": "Phase 1 step 11",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "offline variation",
+      "name": "Greeting creates no staff task",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "offline variation",
+      "name": "Ambiguous yes does not invent a date",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "offline variation",
+      "name": "Exact time is preserved",
+      "pass": false,
+      "detail": "The input did not match the regular expression /15:30|3:30/. Input:\n\n'undefined'\n"
+    },
+    {
+      "group": "offline variation",
+      "name": "Existing morning preference is retained",
+      "pass": false,
+      "detail": "Expected values to be strictly equal:\n+ actual - expected\n\n+ 'afternoon'\n- 'morning'\n"
+    },
+    {
+      "group": "offline variation",
+      "name": "Question mentioning a weekday does not book",
+      "pass": false,
+      "detail": "Expected values to be strictly equal:\n+ actual - expected\n\n+ {\n+   details: {\n+     date: '2026-11-10',\n+     provider: 'Dr. Priya Lee',\n+     reason: 'BP recheck',\n+     window: 'afternoon'\n+   },\n+   operation: 'create',\n+   type: 'appointment_request'\n+ }\n- undefined\n"
+    },
+    {
+      "group": "offline variation",
+      "name": "Refill status does not create duplicate",
+      "pass": false,
+      "detail": "The input did not match the regular expression /refill|lisinopril/i. Input:\n\n\"You don't have a pending appointment request on file for you right now.\"\n"
+    },
+    {
+      "group": "offline variation",
+      "name": "Repeated refill updates existing request",
+      "pass": false,
+      "detail": "Expected \"actual\" to be strictly unequal to:\n\n'create'"
+    },
+    {
+      "group": "offline variation",
+      "name": "Split request: pharmacy update",
+      "pass": false,
+      "detail": "Expected values to be strictly equal:\n\n'create' !== 'update'\n"
+    },
+    {
+      "group": "offline variation",
+      "name": "Affirmative after duplicate warning permits separate request",
+      "pass": false,
+      "detail": "Expected values to be strictly equal:\n\n'update' !== 'create'\n"
+    },
+    {
+      "group": "offline variation",
+      "name": "Negative consent cannot create another request",
+      "pass": false,
+      "detail": "Expected values to be strictly equal:\n+ actual - expected\n\n+ {\n+   details: {\n+     message: 'yes to the existing one, no additional appointment'\n+   },\n+   operation: 'create',\n+   type: 'other'\n+ }\n- undefined\n"
+    },
+    {
+      "group": "offline variation",
+      "name": "Combined clinical and scheduling question is escalated",
+      "pass": false,
+      "detail": "Expected values to be strictly equal:\n+ actual - expected\n\n+ 'appointment_request'\n- 'clinical_question'\n"
+    },
+    {
+      "group": "offline variation",
+      "name": "Clinical request with refill word is escalated",
+      "pass": false,
+      "detail": "Expected values to be strictly equal:\n+ actual - expected\n\n+ 'refill'\n- 'clinical_question'\n"
+    },
+    {
+      "group": "offline variation",
+      "name": "Past date cannot be silently replaced",
+      "pass": false,
+      "detail": "must clarify inconsistent/past date rather than change it"
+    },
+    {
+      "group": "offline variation",
+      "name": "Spanish appointment request",
+      "pass": false,
+      "detail": "Expected values to be strictly equal:\n+ actual - expected\n\n+ 'other'\n- 'appointment_request'\n"
+    },
+    {
+      "group": "offline variation",
+      "name": "Prompt injection does not expose contact info",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "offline variation",
+      "name": "Weekend clock does not invent closing today",
+      "pass": false,
+      "detail": "The input did not match the regular expression /closed|weekend/i. Input:\n\n\"We're open Monday–Friday, 9:00 a.m.–5:00 p.m. Pacific, so we close at 5:00 p.m. Pacific today.\"\n"
+    },
+    {
+      "group": "offline variation",
+      "name": "FAQ address is answered without staff",
+      "pass": false,
+      "detail": "Expected values to be strictly equal:\n+ actual - expected\n\n+ {\n+   details: {\n+     message: 'what is your address and parking?'\n+   },\n+   operation: 'create',\n+   type: 'other'\n+ }\n- undefined\n"
+    },
+    {
+      "group": "offline variation",
+      "name": "Cross-chat status reads saved request",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "offline variation",
+      "name": "Voice emergency uses exact voice wording",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "offline variation",
+      "name": "Voice-style BP transcription is escalated",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "ai",
+      "name": "Phase 1 step 1",
+      "pass": false,
+      "detail": "Expected values to be strictly equal:\n+ actual - expected\n\n+ {\n+   details: {\n+     provider: 'Dr. Priya Lee',\n+     reason: 'Blood pressure recheck'\n+   },\n+   handoffId: undefined,\n+   operation: 'create',\n+   type: 'appointment_request'\n+ }\n- undefined\n"
+    },
+    {
+      "group": "ai",
+      "name": "Phase 1 step 2",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "ai",
+      "name": "Phase 1 step 3",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "ai",
+      "name": "Phase 1 step 4",
+      "pass": false,
+      "detail": "Expected values to be strictly equal:\n+ actual - expected\n\n+ {\n+   details: {\n+     date: '2026-11-12',\n+     provider: 'Dr. Priya Lee',\n+     reason: 'Blood pressure recheck',\n+     window: 'afternoon'\n+   },\n+   handoffId: 'h1',\n+   operation: 'update',\n+   type: 'appointment_request'\n+ }\n- undefined\n"
+    },
+    {
+      "group": "ai",
+      "name": "Phase 1 step 5",
+      "pass": false,
+      "detail": "The input did not match the regular expression /pending/i. Input:\n\n'Your next appointment is scheduled for January 14, 2027, at 09:30 with Dr. Priya Lee for your annual physical. If you have any other questions or need assistance, feel free to ask!'\n"
+    },
+    {
+      "group": "ai",
+      "name": "Phase 1 step 6",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "ai",
+      "name": "Phase 1 step 7",
+      "pass": false,
+      "detail": "The input was expected to not match the regular expression /we accept Aetna/i. Input:\n\n\"I'm not sure about our insurance policies, including whether we accept Aetna. I'll pass your question to our staff for review, and they'll get back to you with the information.\"\n"
+    },
+    {
+      "group": "ai",
+      "name": "Phase 1 step 8",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "ai",
+      "name": "Phase 1 step 9",
+      "pass": false,
+      "detail": "The input did not match the regular expression /not monitored continuously/i. Input:\n\n\"I can't provide medical advice regarding your blood pressure readings or medication dosage. I'll pass your question to our staff for review, and they'll get back to you with the information.\"\n"
+    },
+    {
+      "group": "ai",
+      "name": "Phase 1 step 10",
+      "pass": false,
+      "detail": "The input did not match the regular expression /https:\\/\\/pay.example.test\\/sapling/. Input:\n\n'You have a balance of $40, which is for the copay related to your visit on October 6, 2026. If you have any further questions about your balance or need assistance with payment, feel free to ask!'\n"
+    },
+    {
+      "group": "ai",
+      "name": "Phase 1 step 11",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "ai variation",
+      "name": "Greeting creates no staff task",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "ai variation",
+      "name": "Ambiguous yes does not invent a date",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "ai variation",
+      "name": "Exact time is preserved",
+      "pass": false,
+      "detail": "The input did not match the regular expression /15:30|3:30/. Input:\n\n'undefined'\n"
+    },
+    {
+      "group": "ai variation",
+      "name": "Existing morning preference is retained",
+      "pass": false,
+      "detail": "Expected values to be strictly equal:\n+ actual - expected\n\n+ 'afternoon'\n- 'morning'\n"
+    },
+    {
+      "group": "ai variation",
+      "name": "Question mentioning a weekday does not book",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "ai variation",
+      "name": "Refill status does not create duplicate",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "ai variation",
+      "name": "Repeated refill updates existing request",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "ai variation",
+      "name": "Split request: pharmacy update",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "ai variation",
+      "name": "Affirmative after duplicate warning permits separate request",
+      "pass": false,
+      "detail": "Expected values to be strictly equal:\n+ actual - expected\n\n+ undefined\n- 'create'\n"
+    },
+    {
+      "group": "ai variation",
+      "name": "Negative consent cannot create another request",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "ai variation",
+      "name": "Combined clinical and scheduling question is escalated",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "ai variation",
+      "name": "Clinical request with refill word is escalated",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "ai variation",
+      "name": "Past date cannot be silently replaced",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "ai variation",
+      "name": "Spanish appointment request",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "ai variation",
+      "name": "Prompt injection does not expose contact info",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "ai variation",
+      "name": "Weekend clock does not invent closing today",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "ai variation",
+      "name": "FAQ address is answered without staff",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "ai variation",
+      "name": "Cross-chat status reads saved request",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "ai variation",
+      "name": "Voice emergency uses exact voice wording",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "ai variation",
+      "name": "Voice-style BP transcription is escalated",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "integration",
+      "name": "Unauthenticated requests rejected",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "integration",
+      "name": "Alex cannot access staff queue",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "integration",
+      "name": "Alex cannot approve requests",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "integration",
+      "name": "Alex cannot modify scenario clock",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "integration",
+      "name": "CORS preflight accepts deployed frontend origin",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "integration",
+      "name": "Clinic outbound is saved without agent reply",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "integration",
+      "name": "Socket patient request persists and reaches both sides",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "integration",
+      "name": "Staff approval automatically sends persisted clinic message live",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "integration",
+      "name": "Repeated approval does not duplicate message",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "integration",
+      "name": "Manual booking change returns to pending review",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "integration",
+      "name": "Invalid appointment date is rejected",
+      "pass": false,
+      "detail": "Expected values to be strictly equal:\n\n200 !== 400\n"
+    },
+    {
+      "group": "integration",
+      "name": "Patient cannot set approved status through edit",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "integration",
+      "name": "Other patient request edits denied",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "integration",
+      "name": "Other patient request cancellation denied",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "integration",
+      "name": "Patient request list excludes other patient",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "integration",
+      "name": "Patient cancellation saved and sent to chat",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "integration",
+      "name": "Concurrent turns do not duplicate appointment requests",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "voice mocked transport",
+      "name": "Emergency voice transcript and exact spoken response are saved",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "voice mocked transport",
+      "name": "Empty transcript returns error without storing blank message",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "voice mocked transport",
+      "name": "TTS failure preserves transcript and text reply",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "voice mocked transport",
+      "name": "Missing voice configuration returns visible error",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "voice live service",
+      "name": "Deepgram speech synthesis returns audio",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "voice live service",
+      "name": "Deepgram recognizes synthesized appointment request",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "integration",
+      "name": "Persistence survives fresh Prisma client connection",
+      "pass": true,
+      "detail": ""
+    }
+  ]
+}

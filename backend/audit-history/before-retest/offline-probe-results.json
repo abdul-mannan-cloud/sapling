@@ -1,0 +1,20 @@
+[
+  {
+    "name": "Missing API key uses offline agent",
+    "pass": true
+  },
+  {
+    "name": "Hosted model outage falls back to offline",
+    "pass": true
+  },
+  {
+    "name": "Safety detector catches speech-style pain in chest",
+    "pass": false,
+    "detail": "Expected values to be strictly equal:\n\nfalse !== true\n"
+  },
+  {
+    "name": "Negative consent never bypasses duplicate guard",
+    "pass": false,
+    "detail": "Expected values to be strictly equal:\n+ actual - expected\n\n+ {\n+   details: {\n+     date: '2026-11-12'\n+   },\n+   operation: 'create',\n+   type: 'appointment_request'\n+ }\n- undefined\n"
+  }
+]

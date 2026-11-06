@@ -10,6 +10,13 @@ export function weekdayOf(dateStr: string): string {
   return WEEKDAY_NAMES[parseDateOnly(dateStr).getUTCDay()];
 }
 
+/** Weekday of an ISO instant in the clinic's own timezone (not UTC) — used to answer "what time do you close today" correctly regardless of which day the scenario clock is set to. */
+export function weekdayOfInstant(iso: string): string {
+  return new Intl.DateTimeFormat('en-US', { weekday: 'long', timeZone: 'America/Los_Angeles' })
+    .format(new Date(iso))
+    .toLowerCase();
+}
+
 export function formatDateLong(dateStr: string): string {
   return new Intl.DateTimeFormat('en-US', {
     weekday: 'long',
